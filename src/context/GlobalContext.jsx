@@ -57,6 +57,13 @@ export const GlobalProvider = ({ children }) => {
     }));
   };
 
+  const updateItem = (collection, id, newData) => {
+    setState(prev => ({
+      ...prev,
+      [collection]: prev[collection].map(i => i.id === id ? { ...i, ...newData } : i)
+    }));
+  };
+
   const addLog = (action) => {
     setState(prev => ({
       ...prev,
