@@ -5,7 +5,13 @@ import './TopBar.css';
 
 const TopBar = () => {
   const [time, setTime] = useState('');
-  const { state } = useGlobalContext();
+  const { state, syncStatus } = useGlobalContext();
+
+  const syncIndicator = {
+    synced: { color: '#28a745', label: '● Sync' },
+    connecting: { color: '#fd7e14', label: '◌ Conectando...' },
+    offline: { color: '#dc3545', label: '○ Offline' }
+  }[syncStatus || 'connecting'];
 
   useEffect(() => {
     const updateClock = () => {
@@ -56,6 +62,7 @@ const TopBar = () => {
       <div className="top-right">
         <div className="clock-gmt5">
           <span>🇪🇨 {time}</span>
+          <span style={{ fontSize: '0.7rem', color: syncIndicator.color, marginLeft: '0.5rem', fontWeight: 600 }}>{syncIndicator.label}</span>
         </div>
         <button className="icon-action-btn">
           <MdNotifications />
