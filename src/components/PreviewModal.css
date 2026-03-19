@@ -1,0 +1,55 @@
+.preview-data p {
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  color: var(--text-main);
+}
+
+.preview-data strong {
+  color: var(--text-muted);
+  display: inline-block;
+  min-width: 100px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+  text-transform: capitalize;
+}
+
+/* Base Semaphore Mapping based on state for demo */
+.badge.idea, .badge.pendiente, .badge.backlog, .badge.abierto { background-color: var(--status-warning); }
+.badge.in_progress, .badge.produccion, .badge.en-proceso { background-color: var(--primary-color); }
+.badge.done, .badge.aprobado, .badge.resuelto { background-color: var(--status-ok); }
+.badge.danger { background-color: var(--status-danger); }
+
+.error-text {
+  color: var(--status-danger);
+  font-weight: 500;
+}
+
+/* Styled Network Checkboxes */
+.network-label input {
+  display: none;
+}
+.network-label .net-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.network-label input:checked + .net-pill {
+  background-color: var(--net-color);
+  border-color: var(--net-color);
+  color: white;
+}

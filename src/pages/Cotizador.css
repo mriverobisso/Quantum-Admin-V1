@@ -1,0 +1,249 @@
+.cotizador-layout {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.cotizador-catalog {
+  flex: 1;
+  min-width: 280px;
+}
+
+.cotizador-invoice {
+  flex: 2.5;
+  position: sticky;
+  top: 90px;
+}
+
+.quick-add-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.quick-card {
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.quick-card:hover {
+  border-color: var(--primary-color);
+}
+
+.qc-icon {
+  background-color: rgba(42, 157, 143, 0.1);
+  color: var(--primary-color);
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.qc-info {
+  flex: 1;
+  min-width: 0; /* Permite que el texto se trunque dentro del contenedor flex */
+}
+
+.qc-info h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-main);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qc-info span {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  display: block;
+  margin-top: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Invoice Panel */
+.invoice-card {
+  background-color: var(--surface-color);
+}
+
+.invoice-header {
+  border-bottom: 2px dashed var(--border-color);
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.invoice-header h2 {
+  font-size: 1.25rem;
+  color: var(--text-main);
+}
+
+.invoice-header p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin: 0.2rem 0 0 0;
+}
+
+.invoice-client label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.input-field {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.invoice-items {
+  min-height: 150px;
+  max-height: 300px;
+  overflow-y: auto;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+}
+
+.invoice-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: var(--bg-color);
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  gap: 1rem;
+}
+
+.invoice-item > span:first-child {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.item-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-icon.danger {
+  background: none;
+  border: none;
+  color: var(--status-danger);
+  cursor: pointer;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+}
+
+.empty-items {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  padding: 2rem 1rem;
+}
+
+.tot-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.discount-row {
+  align-items: center;
+}
+
+.discount-input {
+  width: 60px;
+  padding: 0.4rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  text-align: right;
+  font-family: inherit;
+}
+
+.format-total {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.grand-total {
+  font-size: 1.5rem;
+  color: var(--primary-color);
+}
+
+@media (max-width: 1000px) {
+  .cotizador-layout {
+    flex-direction: column;
+  }
+  
+  .cotizador-invoice, .cotizador-catalog {
+    width: 100%;
+  }
+  
+  .cotizador-invoice {
+    position: static;
+  }
+}
+
+@media (max-width: 480px) {
+  .quick-add-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .tot-row {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .tot-row span:first-child {
+    flex: 1;
+    min-width: 100px;
+  }
+}

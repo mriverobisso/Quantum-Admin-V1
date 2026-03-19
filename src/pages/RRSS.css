@@ -1,0 +1,158 @@
+/* Reusing Kanban rules mapped previously */
+.kanban-board {
+  display: flex;
+  gap: 1.5rem;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+  min-height: 60vh;
+}
+
+.kanban-col {
+  flex: 1;
+  min-width: 280px;
+  background-color: var(--surface-color);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.col-header {
+  padding: 1rem;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-color);
+  border-radius: 12px 12px 0 0;
+  color: var(--text-main);
+}
+
+.col-body {
+  padding: 1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.kanban-card {
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: grab;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.kanban-card:active { cursor: grabbing; }
+.kanban-card:hover { transform: translateY(-3px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.client-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  background-color: var(--surface-color);
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  color: var(--primary-color);
+  border: 1px solid var(--border-color);
+}
+
+.net-icons { display: flex; gap: 0.3rem; }
+.net-dot {
+  width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+}
+
+.card-title { margin: 0 0 0.5rem 0; font-size: 0.95rem; font-weight: 600; line-height: 1.3; }
+.card-meta { margin: 0; font-size: 0.8rem; color: var(--text-muted); }
+
+/* Advance Calendar Grid Implementation */
+.mock-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background-color: var(--border-color);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.calendar-cell {
+  background-color: var(--surface-color);
+  min-height: 140px;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  transition: background-color 0.2s;
+}
+
+.calendar-cell:hover { background-color: var(--bg-color); }
+
+.day-number {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  align-self: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+.has-events .day-number { color: var(--text-main); }
+
+.cell-events {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.event-tag {
+  background-color: rgba(42, 157, 143, 0.1);
+  border: 1px solid rgba(42, 157, 143, 0.2);
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.event-tag:hover { transform: scale(1.02); }
+
+.event-networks { display: flex; gap: 0.2rem; }
+.event-client { font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Views Toggle Header */
+.view-toggle {
+  display: flex;
+  background-color: var(--surface-color);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.view-toggle button {
+  padding: 0.6rem 1rem;
+  border: none;
+  background: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.view-toggle button:hover { background-color: var(--bg-color); color: var(--text-main); }
+.view-toggle button.active { background-color: var(--primary-color); color: white; }

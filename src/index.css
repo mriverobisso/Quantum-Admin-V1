@@ -1,0 +1,118 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Raleway:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Branding & Accents */
+  --primary-color: #2a9d8f;
+  --primary-hover: #21867a;
+  --accent-tech: #f97316;
+  --accent-studio: #eab308;
+  --accent-crm: #22c55e;
+
+  /* Semaphore Colors */
+  --status-ok: #28A745;
+  --status-warning: #FD7E14;
+  --status-danger: #DC3545;
+
+  /* Light Theme Variables */
+  --bg-color: #f8f9fa;
+  --surface-color: #ffffff;
+  --text-main: #2b2d42;
+  --text-muted: #6c757d;
+  --border-color: #e9ecef;
+  --sidebar-bg: #ffffff;
+  --sidebar-hover: rgba(42, 157, 143, 0.08);
+}
+
+.dark-mode {
+  /* Dark Theme Variables */
+  --bg-color: #121212;
+  --surface-color: #1e1e1e;
+  --text-main: #f8f9fa;
+  --text-muted: #adb5bd;
+  --border-color: #2d2d2d;
+  --sidebar-bg: #1a1a1a;
+  --sidebar-hover: rgba(42, 157, 143, 0.2);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Raleway', sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  transition: background-color 0.3s, color 0.3s;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6, .subtitle, .nav-item {
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Utilities */
+.card {
+  background: var(--surface-color);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
+  padding: 1.5rem;
+  border: 1px solid var(--border-color);
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  transition: background-color 0.2s, transform 0.1s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.page-header > div {
+  flex: 1;
+  min-width: 250px;
+}
+
+.page-header h1 {
+  font-size: 1.6rem;
+  color: var(--text-main);
+  margin-bottom: 0.2rem;
+}
+
+.page-header .subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.module-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}

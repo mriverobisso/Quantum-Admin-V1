@@ -1,0 +1,125 @@
+import React from 'react';
+import { useGlobalContext } from '../context/GlobalContext';
+import { MdAdd, MdUploadFile, MdEdit, MdDelete } from 'react-icons/md';
+import './RRSS.css'; // Mismas reglas de Kanban
+
+const getDesignSemaphore = (dueDate, status) => {
+  if (status === 'terminado') return 'var(--status-ok)';
+  
+  if (!dueDate) return 'var(--text-muted)';
+  const now = new Date();
+  const due = new Date(dueDate);
+  const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
+  
+  if (diffDays < 0) return 'var(--status-danger)';
+  if (diffDays <= 2) return 'var(--status-warning)';
+  return 'var(--text-muted)';
+};
+
+const Design = () => {
+  const { state, setState, setPreview, openFormModal, addLog, deleteItem } = useGlobalContext();
+  const { tasks, clients } = state;
+
+  const designTasks = tasks.filter(t => t.module === 'Design');
+
+  const handleDragStart = (e, taskId) => {
+    e.dataTransfer.setData('taskId', taskId);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e, newStatus) => {
+    e.preventDefault();
+    const taskId = e.dataTransfer.getData('taskId');
+    setState(prev => {
+      const newItems = prev.tasks.map(t => 
+        t.id === taskId ? { ...t, status: newStatus } : t
+      );
+      return { ...prev, tasks: newItems };
+    });
+  };
+
+  // Simulated drag&drop upload for graphic assets to mark as done
+  const handleSimulateUpload = (e, taskId, eEvent) => {
+     eEvent.stopPropagation(); // Prevent preview trigger
+     setState(prev => {
+        const newItems = prev.tasks.map(t => 
+           t.id === taskId ? { ...t, status: 'terminado', assets: 'Arte_Aprobado.png' } : t
+        );
+        return { ...prev, tasks: newItems };
+     });
+     addLog(`Arte final subido para pieza gráfica #${taskId}`);
+  };
+
+  return (
+    <div className="page-container design-container">
+      <header className="page-header module-header">
+        <div>
+          <h1>Taller de Diseño</h1>
+          <p className="subtitle">Producción de piezas gráficas</p>
+        </div>
+        <button className="btn-primary" onClick={() => openFormModal('new_design')}><MdAdd /> Solicitar Arte (Brief)</button>
+      </header>
+
+      <div className="kanban-board">
+        {['backlog', 'en_proceso', 'terminado'].map(col => (
+           <div 
+             key={col} 
+             className="kanban-col"
+             onDragOver={handleDragOver}
+             onDrop={(e) => handleDrop(e, col)}
+             style={{ borderTop: col === 'terminado' ? '4px solid var(--status-ok)' : '1px solid var(--border-color)' }}
+           >
+             <h3 className="col-header">{col.toUpperCase().replace('_', ' ')}</h3>
+             <div className="col-body">
+                {designTasks.filter(t => t.status === col).map(t => {
+                   const client = clients.find(c => c.id === t.clientId);
+                   const borderColor = getDesignSemaphore(t.dueDate, t.status);
+                   
+                   return (
+                     <div 
+                       key={t.id} 
+                       className="kanban-card"
+                       draggable
+                       onDragStart={(e) => handleDragStart(e, t.id)}
+                       onClick={() => setPreview('task', t.id)}
+                       style={{ borderLeft: `5px solid ${borderColor}` }}
+                     >
+                       <div className="card-header">
+                          <span className="client-tag">{client?.name || 'Cliente'}</span>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>{t.format}</span>
+                       </div>
+                       <h4 className="card-title">{t.title}</h4>
+                       <p className="card-meta">Límite: {new Date(t.dueDate).toLocaleDateString()}</p>
+                       
+                       <div className="card-bottom-actions" style={{ display: 'flex', gap: '0.4rem', marginTop: '0.8rem', justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '0.6rem', marginBottom: '0.4rem' }}>
+                          <button className="icon-btn edit" style={{ padding: '0.3rem' }} title="Editar" onClick={(e) => { e.stopPropagation(); openFormModal('edit_design', t); }}><MdEdit size={16} /></button>
+                          <button className="icon-btn danger" style={{ padding: '0.3rem' }} title="Eliminar" onClick={(e) => { e.stopPropagation(); deleteItem('tasks', t.id); }}><MdDelete size={16} /></button>
+                       </div>
+                       
+                       {col !== 'terminado' && (
+                         <div className="mt-2 text-center">
+                            <button 
+                              className="btn-secondary" 
+                              style={{ width: '100%', fontSize: '0.8rem', padding: '0.4rem', borderStyle: 'dashed' }}
+                              onClick={(e) => handleSimulateUpload(null, t.id, e)}
+                            >
+                              <MdUploadFile /> Subir Arte / Mockup
+                            </button>
+                         </div>
+                       )}
+                       {t.assets && <p className="mt-2 code-text" style={{ fontSize: '0.75rem' }}>✅ {t.assets}</p>}
+                     </div>
+                   );
+                })}
+             </div>
+           </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default Design;

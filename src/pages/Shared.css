@@ -1,0 +1,9 @@
+.clickable-text {
+  cursor: pointer;
+  color: var(--primary-color);
+  transition: opacity 0.2s;
+}
+.clickable-text:hover {
+  text-decoration: underline;
+  opacity: 0.8;
+}

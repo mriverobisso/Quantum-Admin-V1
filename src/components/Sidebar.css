@@ -1,0 +1,106 @@
+.sidebar {
+  width: 260px;
+  background-color: var(--sidebar-bg);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1rem;
+  transition: width 0.3s ease;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidebar.collapsed {
+  width: 80px;
+  padding: 1.5rem 0.5rem;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  padding: 0 0.5rem;
+}
+
+.sidebar.collapsed .sidebar-header {
+  flex-direction: column;
+  gap: 1.5rem;
+  justify-content: center;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.burger-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.burger-btn:hover { color: var(--text-main); }
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Requisito: mínimo 15px de gap */
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase; /* Requisito: uppercase */
+  transition: all 0.2s;
+  border: none;
+  background: none;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.sidebar.collapsed .nav-item {
+  justify-content: center;
+  padding: 0.75rem 0;
+}
+
+.nav-item:hover {
+  background-color: var(--sidebar-hover);
+  color: var(--text-main);
+}
+
+.nav-item.active {
+  background-color: var(--sidebar-hover);
+  color: var(--primary-color);
+}
+
+/* Specific Brand Colors on Hover/Active */
+.nav-item:hover .brand-studio, .nav-item.active .brand-studio { color: var(--accent-studio); }
+.nav-item:hover .brand-tech, .nav-item.active .brand-tech { color: var(--accent-tech); }
+.nav-item:hover .brand-crm, .nav-item.active .brand-crm { color: var(--accent-crm); }
+.nav-item:hover .brand-support, .nav-item.active .brand-support { color: #8b5cf6; }
+.nav-item:hover .brand-finance, .nav-item.active .brand-finance { color: #f59e0b; }
+
+.nav-icon {
+  font-size: 1.4rem;
+  transition: color 0.2s;
+}
+
+.sidebar.collapsed .nav-icon {
+  font-size: 1.6rem;
+}

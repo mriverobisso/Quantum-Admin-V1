@@ -1,0 +1,12 @@
+@import './Shared.css';
+
+.proforma-placeholder {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fafafa;
+  border-radius: 8px;
+  border: 1px dashed var(--border-color);
+  color: var(--text-muted);
+}

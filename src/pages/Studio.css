@@ -1,0 +1,115 @@
+@import './Shared.css';
+
+.calendar-section {
+  margin-bottom: 1.5rem;
+}
+
+.calendar-controls {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.icon-btn:hover {
+  color: var(--text-main);
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.calendar-day-header {
+  padding: 0.75rem;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+}
+
+.calendar-day-header:last-child { border-right: none; }
+
+.calendar-cell {
+  min-height: 100px;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+  background-color: white;
+}
+
+.calendar-cell:nth-child(7n) { border-right: none; }
+.calendar-cell.empty { background-color: #f9fafb; }
+
+.day-number {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.pipeline-board {
+  display: flex;
+  gap: 1.5rem;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+}
+
+.pipeline-column {
+  flex: 1;
+  min-width: 250px;
+  background-color: #fafafa;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.column-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.status-indicator {
+  width: 4px;
+  height: 16px;
+  border-radius: 2px;
+}
+
+.pipeline-column.pendiente .status-indicator { background-color: #f59e0b; }
+.pipeline-column.en-progreso .status-indicator { background-color: #3b82f6; }
+.pipeline-column.revisión .status-indicator { background-color: #8b5cf6; }
+.pipeline-column.aprobado .status-indicator { background-color: #10b981; }
+
+.column-header h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+  flex: 1;
+}
+
+.count {
+  background-color: white;
+  padding: 0.1rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+}
+
+.column-content {
+  min-height: 150px;
+}
