@@ -119,6 +119,7 @@ const GlobalFormModal = () => {
       const expenseData = {
         desc: formVals.desc,
         amount: Number(formVals.amount),
+        category: formVals.category || 'General',
         date: formVals.date || new Date().toISOString().split('T')[0]
       };
       
@@ -342,6 +343,20 @@ const GlobalFormModal = () => {
         <div className="form-group">
           <label>Descripción del Gasto</label>
           <input type="text" name="desc" className="input-field" defaultValue={formData.desc} placeholder="Ej: Suscripciones, Sueldos, Oficina..." required />
+        </div>
+        <div className="form-group">
+          <label>Categoría de Gasto</label>
+          <select name="category" className="input-field" defaultValue={formData.category || 'General'} required>
+            <option value="Operativo">Operativo</option>
+            <option value="Sueldos">Sueldos / Nómina</option>
+            <option value="Suscripciones">Suscripciones / Software</option>
+            <option value="Marketing">Marketing / Publicidad</option>
+            <option value="Servicios">Servicios (Luz, Agua, Internet)</option>
+            <option value="Alquiler">Alquiler / Oficina</option>
+            <option value="Impuestos">Impuestos / Legal</option>
+            <option value="Proveedores">Proveedores</option>
+            <option value="General">General / Otros</option>
+          </select>
         </div>
         <div className="form-group" style={{ display: 'flex', gap: '1rem' }}>
           <div style={{ flex: 1 }}>
