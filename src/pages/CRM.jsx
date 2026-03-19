@@ -4,7 +4,7 @@ import { MdAdd, MdEdit, MdDelete, MdSearch, MdCake } from 'react-icons/md';
 import './GridModules.css';
 
 const CRM = () => {
-  const { state, setPreview, openFormModal } = useGlobalContext();
+  const { state, setPreview, openFormModal, deleteItem } = useGlobalContext();
   const { clients } = state;
   const [searchTerm, setSearchTerm] = useState('');
 
