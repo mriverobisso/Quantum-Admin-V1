@@ -24,19 +24,31 @@ const GlobalFormModal = () => {
     
     // Switch based on Action Type
     if (modal.type === 'new_client' || modal.type === 'edit_client') {
+      // Collect selected services from checkboxes
+      const serviceCheckboxes = Array.from(e.target.querySelectorAll('input[name="services"]'));
+      const selectedServices = serviceCheckboxes.filter(cb => cb.checked).map(cb => cb.value);
+
       const clientData = {
         name: formVals.name,
         ruc: formVals.ruc,
+        email: formVals.email || '',
+        phone: formVals.phone || '',
+        address: formVals.address || '',
+        city: formVals.city || '',
+        contactPerson: formVals.contactPerson || '',
+        contactRole: formVals.contactRole || '',
+        notes: formVals.notes || '',
         birthday: formVals.birthday,
+        services: selectedServices,
       };
 
       if (modal.type === 'edit_client') {
         updateItem('clients', formData.id, clientData);
+        addLog(`Editó cliente: ${clientData.name}`);
       } else {
         const newClient = {
           id: `c_${Date.now()}`,
           ...clientData,
-          services: []
         };
         setState(prev => ({ ...prev, clients: [...prev.clients, newClient] }));
         addLog(`Creó nuevo cliente: ${newClient.name}`);
@@ -184,20 +196,73 @@ const GlobalFormModal = () => {
 
   // Content Builders
   if (modal.type === 'new_client' || modal.type === 'edit_client') {
-    title = modal.type === 'new_client' ? 'Añadir Nuevo Cliente (CRM)' : 'Editar Info de Cliente';
+    title = modal.type === 'new_client' ? 'Registrar Nuevo Cliente (CRM)' : 'Editar Ficha de Cliente';
+    const isServiceChecked = (svc) => (formData.services || []).includes(svc);
     content = (
       <>
-        <div className="form-group">
-          <label>Nombre / Razón Social</label>
-          <input type="text" name="name" className="input-field" defaultValue={formData.name} required />
+        <h4 style={{ color: 'var(--primary-color)', margin: '0 0 0.5rem 0', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.3rem' }}>Datos de la Empresa</h4>
+        <div className="form-group" style={{ display: 'flex', gap: '1rem' }}>
+          <div style={{ flex: 2 }}>
+            <label>Nombre / Razón Social *</label>
+            <input type="text" name="name" className="input-field" defaultValue={formData.name} required />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label>RUC / CI *</label>
+            <input type="text" name="ruc" className="input-field" defaultValue={formData.ruc} required />
+          </div>
+        </div>
+        <div className="form-group" style={{ display: 'flex', gap: '1rem' }}>
+          <div style={{ flex: 1 }}>
+            <label>Email Corporativo</label>
+            <input type="email" name="email" className="input-field" defaultValue={formData.email} placeholder="info@empresa.com" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label>Teléfono</label>
+            <input type="tel" name="phone" className="input-field" defaultValue={formData.phone} placeholder="+593 99 000 0000" />
+          </div>
+        </div>
+        <div className="form-group" style={{ display: 'flex', gap: '1rem' }}>
+          <div style={{ flex: 2 }}>
+            <label>Dirección</label>
+            <input type="text" name="address" className="input-field" defaultValue={formData.address} placeholder="Calle, Edificio, Oficina..." />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label>Ciudad</label>
+            <input type="text" name="city" className="input-field" defaultValue={formData.city} placeholder="Guayaquil" />
+          </div>
+        </div>
+
+        <h4 style={{ color: 'var(--primary-color)', margin: '1rem 0 0.5rem 0', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.3rem' }}>Contacto Principal</h4>
+        <div className="form-group" style={{ display: 'flex', gap: '1rem' }}>
+          <div style={{ flex: 1 }}>
+            <label>Nombre del Contacto</label>
+            <input type="text" name="contactPerson" className="input-field" defaultValue={formData.contactPerson} placeholder="Juan Pérez" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label>Cargo</label>
+            <input type="text" name="contactRole" className="input-field" defaultValue={formData.contactRole} placeholder="Gerente General" />
+          </div>
         </div>
         <div className="form-group">
-          <label>RUC / CI</label>
-          <input type="text" name="ruc" className="input-field" defaultValue={formData.ruc} required />
-        </div>
-        <div className="form-group">
-          <label>Fecha de Nacimiento / Creación</label>
+          <label>Fecha de Inicio / Nacimiento *</label>
           <input type="date" name="birthday" className="input-field" defaultValue={formData.birthday} required />
+        </div>
+
+        <h4 style={{ color: 'var(--primary-color)', margin: '1rem 0 0.5rem 0', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.3rem' }}>Servicios Contratados</h4>
+        <div className="form-group">
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', padding: '0.5rem 0' }}>
+            {['Host', 'RRSS', 'Diseño', 'Soporte', 'Cotizador'].map(svc => (
+              <label key={svc} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', padding: '0.4rem 0.8rem', borderRadius: '20px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-color)', fontSize: '0.9rem' }}>
+                <input type="checkbox" name="services" value={svc} defaultChecked={isServiceChecked(svc)} />
+                {svc}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>Notas Internas</label>
+          <textarea name="notes" className="input-field" rows="2" defaultValue={formData.notes} placeholder="Observaciones, recordatorios..."></textarea>
         </div>
       </>
     );

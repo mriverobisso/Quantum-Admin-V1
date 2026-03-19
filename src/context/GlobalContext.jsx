@@ -14,8 +14,8 @@ const initialMockState = {
     logo: null
   },
   clients: [
-    { id: 'c1', name: 'Empresa Alpha S.A', ruc: '0991234567001', birthday: '2026-03-25', services: ['Host', 'RRSS'] },
-    { id: 'c2', name: 'Dr. John Doe', ruc: '0912345678001', birthday: '2026-08-14', services: ['Soporte'] },
+    { id: 'c1', name: 'Empresa Alpha S.A', ruc: '0991234567001', email: 'info@empresaalpha.com', phone: '+593 4 200 0000', address: 'Av. Principal 123, Of. 4B', city: 'Guayaquil', contactPerson: 'Carlos Mendoza', contactRole: 'Gerente Comercial', birthday: '2026-03-25', services: ['Host', 'RRSS'], notes: 'Cliente premium, facturación mensual' },
+    { id: 'c2', name: 'Dr. John Doe', ruc: '0912345678001', email: 'john@doe.com', phone: '+593 99 123 4567', address: 'Centro Médico Norte', city: 'Quito', contactPerson: 'John Doe', contactRole: 'Director', birthday: '2026-08-14', services: ['Soporte'], notes: '' },
   ],
   tasks: [
     { id: 't1', title: 'Post Instagram - Promo', module: 'rrss', status: 'idea', dueDate: '2026-03-20T10:00:00', clientId: 'c1', network: 'instagram' },

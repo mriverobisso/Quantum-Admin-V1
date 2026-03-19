@@ -8,13 +8,18 @@ import './Cotizador.css';
 const Cotizador = () => {
   const { state, addLog, openFormModal } = useGlobalContext();
   const [items, setItems] = useState([]);
-  const [clientName, setClientName] = useState('');
-  const [contactName, setContactName] = useState('');
-  const [contactEmail, setContactEmail] = useState('');
+  const [selectedClientId, setSelectedClientId] = useState('');
   const [notes, setNotes] = useState('');
   const [discount, setDiscount] = useState(0); 
   
   const quickAdds = state.catalog || [];
+  const clients = state.clients || [];
+  const selectedClient = clients.find(c => c.id === selectedClientId);
+  
+  // Auto-derived from CRM
+  const clientName = selectedClient?.name || '';
+  const contactName = selectedClient?.contactPerson || '';
+  const contactEmail = selectedClient?.email || '';
 
   const handleAddItem = (item) => {
     setItems(prev => [...prev, { ...item, lineId: Date.now(), quantity: 1, description: '', itemDiscount: 0 }]);
@@ -34,8 +39,8 @@ const Cotizador = () => {
   const total = subtotal - discountTotal;
 
   const handleExportPDF = () => {
-    if(!clientName || items.length === 0) {
-       console.error('Requisito: Ingrese un Cliente y seleccione al menos un servicio.');
+    if(!selectedClientId || items.length === 0) {
+       alert('Seleccione un cliente del CRM y al menos un servicio del catálogo.');
        return;
     }
 
@@ -230,16 +235,20 @@ const Cotizador = () => {
             
             <div className="invoice-client mt-4" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                <div>
-                 <label>Cliente / Empresa Autorizada:</label>
-                 <input type="text" className="input-field" value={clientName} onChange={e => setClientName(e.target.value)} placeholder="Ej: Industrias XYZ" />
+                 <label>Cliente del CRM (Obligatorio) *</label>
+                 <select className="input-field" value={selectedClientId} onChange={e => setSelectedClientId(e.target.value)} required style={{ fontWeight: selectedClientId ? 'bold' : 'normal' }}>
+                   <option value="">-- Seleccionar Cliente Registrado --</option>
+                   {clients.map(c => <option key={c.id} value={c.id}>{c.name} ({c.ruc})</option>)}
+                 </select>
+                 {!selectedClientId && <p style={{ fontSize: '0.75rem', color: 'var(--status-danger)', marginTop: '0.3rem' }}>⚠ Solo clientes registrados en el CRM</p>}
                </div>
                <div>
-                 <label>Contacto (Representante):</label>
-                 <input type="text" className="input-field" value={contactName} onChange={e => setContactName(e.target.value)} placeholder="Ej: Juan Pérez" />
+                 <label>Contacto (Auto CRM):</label>
+                 <input type="text" className="input-field" value={contactName} readOnly style={{ backgroundColor: 'var(--bg-color)', cursor: 'not-allowed' }} />
                </div>
                <div>
-                 <label>Email de Contacto:</label>
-                 <input type="email" className="input-field" value={contactEmail} onChange={e => setContactEmail(e.target.value)} placeholder="Ej: juan@industrias.com" />
+                 <label>Email (Auto CRM):</label>
+                 <input type="email" className="input-field" value={contactEmail} readOnly style={{ backgroundColor: 'var(--bg-color)', cursor: 'not-allowed' }} />
                </div>
                <div>
                  <label>Notas Adicionales (Visible en PDF):</label>
