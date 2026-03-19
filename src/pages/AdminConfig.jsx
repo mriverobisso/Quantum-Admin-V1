@@ -73,6 +73,23 @@ const AdminConfig = ({ view = 'admin' }) => {
                 <div style={{ marginTop: '1rem' }}>
                    <button className="btn-primary" onClick={handleSaveConfig}><MdSave /> Guardar Configuraciones</button>
                 </div>
+
+                <div style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '2px dashed var(--border-color)' }}>
+                    <h3 style={{ color: 'var(--status-danger)' }}>Acciones de Emergencia</h3>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Si la aplicación se comporta de forma inestable o no carga algunos módulos, puede intentar restablecer el estado inicial.</p>
+                    <button 
+                      className="btn-secondary danger" 
+                      style={{ borderColor: 'var(--status-danger)', color: 'var(--status-danger)' }}
+                      onClick={() => {
+                        if(window.confirm('¿Estás seguro? Se perderán todos los datos locales y se volverá a la configuración de fábrica.')) {
+                           localStorage.removeItem('quantum_state');
+                           window.location.reload();
+                        }
+                      }}
+                    >
+                      Restablecer Toda la Aplicación
+                    </button>
+                 </div>
              </div>
           </div>
         ) : (
