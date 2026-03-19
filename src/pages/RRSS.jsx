@@ -18,11 +18,11 @@ const getNetworkColor = (net) => {
 
 const RRSS = () => {
   const { state, setState, setPreview, openFormModal, deleteItem, archiveItem, duplicateItem } = useGlobalContext();
-  const { tasks, clients } = state;
+  const { tasks = [], clients = [] } = state || {};
   const [view, setView] = useState('kanban');
 
   // Filtrar solo tareas de RRSS (caso insensible) y no archivadas
-  const rrssTasks = tasks.filter(t => t.module?.toLowerCase() === 'rrss' && t.status !== 'archivado');
+  const rrssTasks = (tasks || []).filter(t => t.module?.toLowerCase() === 'rrss' && t.status !== 'archivado');
 
   // Lógica Kanban Drag&Drop
   const handleDragStart = (e, taskId) => {
@@ -37,7 +37,7 @@ const RRSS = () => {
     e.preventDefault();
     const taskId = e.dataTransfer.getData('taskId');
     setState(prev => {
-      const newItems = prev.tasks.map(t => 
+      const newItems = (prev.tasks || []).map(t => 
         t.id === taskId ? { ...t, status: newStatus } : t
       );
       return { ...prev, tasks: newItems };
@@ -76,11 +76,11 @@ const RRSS = () => {
                        <span className="day-number">{day}</span>
                        <div className="cell-events">
                           {dayTasks.map(t => {
-                             const client = clients.find(c => c.id === t.clientId);
+                             const client = (clients || []).find(c => c.id === t.clientId);
                              return (
                                <div key={t.id} className="event-tag" onClick={() => setPreview('task', t.id)}>
                                  <div className="event-networks">
-                                    {t.networks.map(net => (
+                                    {(t.networks || []).map(net => (
                                        <span key={net} className="net-dot" style={{ backgroundColor: getNetworkColor(net) }} title={net}></span>
                                     ))}
                                  </div>
@@ -106,7 +106,7 @@ const RRSS = () => {
                <h3 className="col-header">{col.toUpperCase()}</h3>
                <div className="col-body">
                   {rrssTasks.filter(t => t.status === col).map(t => {
-                     const client = clients.find(c => c.id === t.clientId);
+                     const client = (clients || []).find(c => c.id === t.clientId);
                      return (
                        <div 
                          key={t.id} 
@@ -118,7 +118,7 @@ const RRSS = () => {
                          <div className="card-header">
                             <span className="client-tag">{client?.name || 'Cliente'}</span>
                             <div className="net-icons">
-                              {t.networks.map(net => (
+                              {(t.networks || []).map(net => (
                                 <span key={net} className="net-dot" style={{ backgroundColor: getNetworkColor(net) }}></span>
                               ))}
                             </div>
