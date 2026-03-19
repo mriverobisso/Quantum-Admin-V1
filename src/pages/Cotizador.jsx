@@ -35,7 +35,7 @@ const Cotizador = () => {
 
   const handleExportPDF = () => {
     if(!clientName || items.length === 0) {
-       alert('Requisito: Ingrese un Cliente y seleccione al menos un servicio.');
+       console.error('Requisito: Ingrese un Cliente y seleccione al menos un servicio.');
        return;
     }
 
