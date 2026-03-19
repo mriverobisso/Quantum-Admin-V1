@@ -107,9 +107,13 @@ const PreviewModal = () => {
                    <p><strong>Vencimiento:</strong> {new Date(data.dueDate).toLocaleString()}</p>
                    {data.assets && (
                       <div className="mt-3">
-                         <p><strong>Archivos adjuntos:</strong></p>
+                         <p><strong>Vista Previa:</strong></p>
                          <div style={{ padding: '0.6rem', border: '1px dashed var(--border-color)', borderRadius: '6px', textAlign: 'center', backgroundColor: 'var(--bg-color)', color: 'var(--primary-color)', fontWeight: 'bold' }}>
-                            📁 {data.assets}
+                            {/\.(jpg|jpeg|png|gif|webp)$/i.test(data.assets) ? (
+                              <img src={data.assets} alt="Preview" style={{ maxWidth: '100%', borderRadius: '4px', display: 'block', margin: '0 auto' }} />
+                            ) : (
+                              <>📁 {data.assets}</>
+                            )}
                          </div>
                       </div>
                    )}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useGlobalContext } from '../context/GlobalContext';
-import { MdAdd, MdCalendarMonth, MdViewWeek, MdEdit, MdDelete } from 'react-icons/md';
+import { MdAdd, MdCalendarMonth, MdViewWeek, MdEdit, MdDelete, MdContentCopy, MdArchive } from 'react-icons/md';
 import './RRSS.css';
 
 // Función auxiliar para colores de redes
@@ -17,12 +17,12 @@ const getNetworkColor = (net) => {
 };
 
 const RRSS = () => {
-  const { state, setState, setPreview, openFormModal, deleteItem } = useGlobalContext();
+  const { state, setState, setPreview, openFormModal, deleteItem, archiveItem, duplicateItem } = useGlobalContext();
   const { tasks, clients } = state;
   const [view, setView] = useState('kanban');
 
-  // Filtrar solo tareas de RRSS
-  const rrssTasks = tasks.filter(t => t.module === 'RRSS');
+  // Filtrar solo tareas de RRSS (caso insensible) y no archivadas
+  const rrssTasks = tasks.filter(t => t.module?.toLowerCase() === 'rrss' && t.status !== 'archivado');
 
   // Lógica Kanban Drag&Drop
   const handleDragStart = (e, taskId) => {
@@ -126,7 +126,9 @@ const RRSS = () => {
                          <h4 className="card-title">{t.title}</h4>
                          <p className="card-meta">📅 {t.publishDate ? new Date(t.publishDate).toLocaleString() : 'Sin Fecha'}</p>
                          <div className="card-bottom-actions" style={{ display: 'flex', gap: '0.4rem', marginTop: '0.8rem', justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '0.6rem' }}>
+                            <button className="icon-btn" style={{ padding: '0.3rem' }} title="Duplicar" onClick={(e) => { e.stopPropagation(); duplicateItem('tasks', t.id); }}><MdContentCopy size={16} /></button>
                             <button className="icon-btn edit" style={{ padding: '0.3rem' }} title="Editar" onClick={(e) => { e.stopPropagation(); openFormModal('edit_post', t); }}><MdEdit size={16} /></button>
+                            <button className="icon-btn" style={{ padding: '0.3rem' }} title="Archivar" onClick={(e) => { e.stopPropagation(); archiveItem('tasks', t.id); }}><MdArchive size={16} /></button>
                             <button className="icon-btn danger" style={{ padding: '0.3rem' }} title="Eliminar" onClick={(e) => { e.stopPropagation(); deleteItem('tasks', t.id); }}><MdDelete size={16} /></button>
                          </div>
                        </div>

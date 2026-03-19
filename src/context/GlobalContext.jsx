@@ -83,12 +83,22 @@ export const GlobalProvider = ({ children }) => {
     }
   };
 
-  const updateItem = (collection, id, newData) => {
-    setState(prev => ({
-       ...prev, 
-       [collection]: prev[collection].map(i => i.id === id ? { ...i, ...newData } : i)
-    }));
-    addLog(`Actualizó registro ${id} en ${collection}`);
+  const archiveItem = (collection, id) => {
+    updateItem(collection, id, { status: 'archivado' });
+    addLog(`Archivó registro ${id} en ${collection}`);
+  };
+
+  const duplicateItem = (collection, id) => {
+    const original = state[collection].find(i => i.id === id);
+    if (original) {
+      const newItem = {
+        ...original,
+        id: `${id}_copy_${Date.now()}`,
+        title: original.title ? `${original.title} - COPIA` : original.name ? `${original.name} - COPIA` : 'Copia',
+      };
+      setState(prev => ({ ...prev, [collection]: [...prev[collection], newItem] }));
+      addLog(`Duplicó registro ${id} en ${collection}`);
+    }
   };
 
   return (
@@ -96,7 +106,7 @@ export const GlobalProvider = ({ children }) => {
       state, setState, updateSetting, addLog, 
       previewModal, setPreview, closePreview, 
       formModal, openFormModal, closeFormModal,
-      deleteItem, updateItem
+      deleteItem, updateItem, archiveItem, duplicateItem
     }}>
       {children}
     </GlobalContext.Provider>

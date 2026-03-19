@@ -140,7 +140,7 @@ const GlobalFormModal = () => {
       } else {
          const newPost = {
            id: `t_${Date.now()}`,
-           module: 'RRSS',
+           module: 'rrss',
            status: 'idea',
            ...postData
          };
