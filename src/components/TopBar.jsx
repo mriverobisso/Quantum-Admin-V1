@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useGlobalContext } from '../context/GlobalContext';
-import { MdNotifications, MdSearch } from 'react-icons/md';
+import { MdNotifications, MdSearch, MdMenu } from 'react-icons/md';
 import './TopBar.css';
 
-const TopBar = () => {
+const TopBar = ({ onMobileMenuToggle }) => {
   const [time, setTime] = useState('');
   const { state, syncStatus } = useGlobalContext();
+
+  const currentUser = state.currentUser || {};
 
   const syncIndicator = {
     synced: { color: '#28a745', label: '● Sync' },
@@ -15,7 +17,6 @@ const TopBar = () => {
 
   useEffect(() => {
     const updateClock = () => {
-      // Ecuador Time (GMT-5)
       const options = { timeZone: 'America/Guayaquil', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
       const formatter = new Intl.DateTimeFormat('es-EC', options);
       setTime(formatter.format(new Date()));
@@ -26,7 +27,6 @@ const TopBar = () => {
     return () => clearInterval(intervalId);
   }, []);
 
-  // Calculate dynamic counters
   const { tasks, tickets } = state;
   const allWorkItems = [...tasks, ...tickets.map(tk => ({ ...tk, status: tk.status === 'abierto' ? 'idea' : (tk.status === 'en proceso' ? 'in_progress' : 'done') }))];
   
@@ -36,9 +36,14 @@ const TopBar = () => {
     done: allWorkItems.filter(i => ['done', 'aprobado', 'resuelto'].includes(i.status?.toLowerCase())).length
   };
 
+  const initials = (currentUser.name || 'MQ').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+
   return (
     <header className="top-bar">
-      <div className="top-left">
+      <div className="top-left" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <button className="mobile-hamburger" onClick={onMobileMenuToggle}>
+          <MdMenu />
+        </button>
         <div className="search-box">
           <MdSearch className="search-icon" />
           <input type="text" placeholder="Buscar clientes, tareas..." />
@@ -68,10 +73,10 @@ const TopBar = () => {
           <MdNotifications />
         </button>
         <div className="user-profile">
-          <div className="avatar">MQ</div>
+          <div className="avatar">{initials}</div>
           <div className="user-info">
-            <span className="name">Mario Q.</span>
-            <span className="role">Admin</span>
+            <span className="name">{currentUser.name || 'Mario Q.'}</span>
+            <span className="role">{currentUser.role || 'Admin'}</span>
           </div>
         </div>
       </div>

@@ -13,6 +13,7 @@ import CRM from './pages/CRM';
 import Cotizador from './pages/Cotizador';
 import Finanzas from './pages/Finanzas';
 import AdminConfig from './pages/AdminConfig';
+import Usuarios from './pages/Usuarios';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -38,6 +39,7 @@ function App() {
             <Route path="finances" element={<Finanzas />} />
             
             {/* Sistema */}
+            <Route path="usuarios" element={<Usuarios />} />
             <Route path="admin" element={<AdminConfig view="admin" />} />
             <Route path="settings" element={<AdminConfig view="settings" />} />
           </Route>

@@ -13,6 +13,23 @@ const initialMockState = {
     ruc: '1234567890001',
     logo: null
   },
+  users: [
+    {
+      id: 'u_admin',
+      name: 'Mario Rivero',
+      email: 'mario@grupoquantum.uy',
+      password: 'Iturralde1983',
+      role: 'Administrador',
+      permissions: { dashboard: true, rrss: true, design: true, host: true, soporte: true, crm: true, cotizador: true, finanzas: true, admin: true, config: true, usuarios: true }
+    }
+  ],
+  currentUser: {
+    id: 'u_admin',
+    name: 'Mario Rivero',
+    email: 'mario@grupoquantum.uy',
+    role: 'Administrador',
+    permissions: { dashboard: true, rrss: true, design: true, host: true, soporte: true, crm: true, cotizador: true, finanzas: true, admin: true, config: true, usuarios: true }
+  },
   clients: [
     { id: 'c1', name: 'Empresa Alpha S.A', ruc: '0991234567001', email: 'info@empresaalpha.com', phone: '+593 4 200 0000', address: 'Av. Principal 123, Of. 4B', city: 'Guayaquil', contactPerson: 'Carlos Mendoza', contactRole: 'Gerente Comercial', birthday: '2026-03-25', services: ['Host', 'RRSS'], notes: 'Cliente premium, facturación mensual' },
     { id: 'c2', name: 'Dr. John Doe', ruc: '0912345678001', email: 'john@doe.com', phone: '+593 99 123 4567', address: 'Centro Médico Norte', city: 'Quito', contactPerson: 'John Doe', contactRole: 'Director', birthday: '2026-08-14', services: ['Soporte'], notes: '' },

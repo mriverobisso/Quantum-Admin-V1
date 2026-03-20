@@ -133,3 +133,34 @@
   border-radius: 12px;
   color: var(--text-muted);
 }
+
+/* ── MOBILE ── */
+@media (max-width: 768px) {
+  .grid-module-layout {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .module-card {
+    padding: 14px;
+  }
+
+  .module-card:hover {
+    transform: none;
+  }
+
+  .card-top-actions {
+    opacity: 1;
+  }
+
+  .client-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .search-box {
+    width: 100% !important;
+  }
+}
