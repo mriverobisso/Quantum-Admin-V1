@@ -59,8 +59,11 @@ const Sidebar = ({ isCollapsed, toggleSidebar, isMobileOpen }) => {
     <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''}`}>
       <div className="sidebar-header">
         <div className="sidebar-brand">
-          <div className="logo-icon">Q</div>
-          {!isCollapsed && <h2>Quantum OS</h2>}
+          {isCollapsed ? (
+            <img src="/icon.svg" alt="Q" className="icon-logo" />
+          ) : (
+            <img src="/logo.svg" alt="Quantum" className="main-logo" />
+          )}
         </div>
         <button className="burger-btn" onClick={toggleSidebar}>
           <MdMenu />

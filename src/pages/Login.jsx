@@ -40,8 +40,7 @@ const Login = ({ onLogin }) => {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <div className="logo-icon-lg">Q</div>
-          <h1>Quantum OS</h1>
+          <img src="/logo.svg" alt="Quantum" className="login-main-logo" />
           <p>Inicia sesión para continuar</p>
         </div>
         

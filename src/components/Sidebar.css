@@ -57,6 +57,26 @@
 
 .nav-item {
   display: flex;
+
+.main-logo {
+  height: 38px;
+  width: auto;
+  object-fit: contain;
+  transition: all 0.3s ease;
+}
+
+.icon-logo {
+  height: 38px;
+  width: auto;
+  object-fit: contain;
+  margin: 0 auto;
+}
+
+/* Modo oscuro transfiere grises oscuros a grises claros invertidos */
+body.dark-mode .main-logo,
+body.dark-mode .icon-logo {
+  filter: invert(0.8) brightness(1.2) grayscale(100%);
+}
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem;
