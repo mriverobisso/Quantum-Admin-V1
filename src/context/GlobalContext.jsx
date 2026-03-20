@@ -18,7 +18,7 @@ const initialMockState = {
       id: 'u_admin',
       name: 'Mario Rivero',
       email: 'mario@grupoquantum.uy',
-      password: 'Iturralde1983',
+      password: 'Mario1983@_',
       role: 'Administrador',
       permissions: { dashboard: true, rrss: true, design: true, host: true, soporte: true, crm: true, cotizador: true, finanzas: true, admin: true, config: true, usuarios: true }
     }
