@@ -150,8 +150,8 @@ const AIChatPanel = ({ isOpen, onClose }) => {
     setIsLoading(true);
 
     try {
-      // Build conversation history for Gemini (only text from previous messages)
-      const history = messages.map(m => ({
+      // Build conversation history for Gemini (only text from previous messages, omitting the initial welcome message)
+      const history = messages.slice(1).map(m => ({
         role: m.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: m.content }]
       }));
@@ -173,7 +173,6 @@ const AIChatPanel = ({ isOpen, onClose }) => {
           parts: [{ text: buildSystemPrompt(state) }]
         },
         contents: history,
-        tools: [{ google_search: {} }],
         generationConfig: {
           temperature: 0.7,
           topP: 0.9,
