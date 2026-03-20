@@ -5,7 +5,7 @@ import { useGlobalContext } from '../context/GlobalContext';
 import './PreviewModal.css'; // Reusing base modal styles
 
 const GlobalFormModal = () => {
-  const { state, setState, formModal, closeFormModal, addLog, updateItem } = useGlobalContext();
+  const { state, setState, formModal, closeFormModal, addLog, updateItem, addItem } = useGlobalContext();
   const modal = formModal;
 
   if (!modal || !modal.isOpen) return null;
@@ -46,17 +46,12 @@ const GlobalFormModal = () => {
         updateItem('clients', formData.id, clientData);
         addLog(`Editó cliente: ${clientData.name}`);
       } else {
-        const newClient = {
-          id: `c_${Date.now()}`,
-          ...clientData,
-        };
-        setState(prev => ({ ...prev, clients: [...prev.clients, newClient] }));
-        addLog(`Creó nuevo cliente: ${newClient.name}`);
+        addItem('clients', clientData);
+        addLog(`Creó nuevo cliente: ${clientData.name}`);
       }
       
     } else if (modal.type === 'new_host') {
       const newHost = {
-        id: `h_${Date.now()}`,
         clientId: formVals.clientId,
         domain: formVals.domain,
         type: formVals.plan,
@@ -65,16 +60,12 @@ const GlobalFormModal = () => {
         cost: Number(formVals.cost)
       };
       
-      setState(prev => {
-        // Automatically add 'Host' service tag to client if not present
-        const updatedClients = prev.clients.map(c => {
-          if (c.id === formVals.clientId && !c.services.includes('Host')) {
-            return { ...c, services: [...c.services, 'Host'] };
-          }
-          return c;
-        });
-        return { ...prev, clients: updatedClients, hostItems: [...prev.hostItems, newHost] };
-      });
+      const client = state.clients.find(c => c.id === formVals.clientId);
+      if (client && !client.services?.includes('Host')) {
+        updateItem('clients', formVals.clientId, { services: [...(client.services||[]), 'Host'] });
+      }
+      
+      addItem('hostItems', newHost);
       addLog(`Registró dominio ${newHost.domain}`);
       
     } else if (modal.type === 'edit_host') {
@@ -98,40 +89,36 @@ const GlobalFormModal = () => {
          updateItem('tickets', formData.id, ticketData);
       } else {
          const newTicket = {
-            id: `tk_${Date.now()}`,
             ...ticketData,
             reportDate: new Date().toISOString(),
             status: 'abierto'
          };
-         setState(prev => {
-           const updatedClients = prev.clients.map(c => {
-             if (c.id === formVals.clientId && !c.services.includes('Soporte')) {
-               return { ...c, services: [...c.services, 'Soporte'] };
-             }
-             return c;
-           });
-           return { ...prev, clients: updatedClients, tickets: [...prev.tickets, newTicket] };
-         });
+         
+         const client = state.clients.find(c => c.id === formVals.clientId);
+         if (client && !client.services?.includes('Soporte')) {
+           updateItem('clients', formVals.clientId, { services: [...(client.services||[]), 'Soporte'] });
+         }
+         
+         addItem('tickets', newTicket);
          addLog(`Abrió ticket de soporte para falla: ${newTicket.detail}`);
       }
       
-    } else if (modal.type === 'new_expense' || modal.type === 'edit_expense') {
-      const expenseData = {
+    } else if (modal.type === 'new_expense' || modal.type === 'edit_expense' || modal.type === 'new_income' || modal.type === 'edit_income') {
+      const isIncome = modal.type.includes('income');
+      const financeData = {
         desc: formVals.desc,
         amount: Number(formVals.amount),
-        category: formVals.category || 'General',
-        date: formVals.date || new Date().toISOString().split('T')[0]
+        category: formVals.category || (isIncome ? 'Ingreso Manual' : 'General'),
+        date: formVals.date || new Date().toISOString().split('T')[0],
+        type: isIncome ? 'income' : 'expense',
+        isRecurring: !!formVals.isRecurring
       };
       
-      if (modal.type === 'edit_expense') {
-         updateItem('finances', formData.id, expenseData);
+      if (modal.type.startsWith('edit_')) {
+         updateItem('finances', formData.id, financeData);
       } else {
-         const newExpense = {
-           id: Date.now(),
-           ...expenseData
-         };
-         setState(prev => ({ ...prev, finances: [...(prev.finances||[]), newExpense] }));
-         addLog(`Registró egreso: $${newExpense.amount} - ${newExpense.desc}`);
+         addItem('finances', financeData);
+         addLog(`Registró ${isIncome ? 'ingreso' : 'egreso'}: $${financeData.amount} - ${financeData.desc}`);
       }
       
     } else if (modal.type === 'new_post' || modal.type === 'edit_post') {
@@ -152,12 +139,11 @@ const GlobalFormModal = () => {
          updateItem('tasks', formData.id, postData);
       } else {
          const newPost = {
-           id: `t_${Date.now()}`,
            module: 'rrss',
            status: 'idea',
            ...postData
          };
-         setState(prev => ({ ...prev, tasks: [...prev.tasks, newPost] }));
+         addItem('tasks', newPost);
          addLog(`Agendó nuevo post en RRSS para cliente #${formVals.clientId}`);
       }
 
@@ -174,12 +160,11 @@ const GlobalFormModal = () => {
          updateItem('tasks', formData.id, designData);
       } else {
          const newDesignTask = {
-           id: `t_${Date.now()}`,
            module: 'Design',
            status: 'backlog',
            ...designData
          };
-         setState(prev => ({ ...prev, tasks: [...prev.tasks, newDesignTask] }));
+         addItem('tasks', newDesignTask);
          addLog(`Solicitó pieza gráfica: ${newDesignTask.title} formato ${newDesignTask.format}`);
       }
     } else if (modal.type === 'new_catalog_item' || modal.type === 'edit_catalog_item') {
@@ -192,12 +177,8 @@ const GlobalFormModal = () => {
         updateItem('catalog', formData.id, itemData);
         addLog(`Editó opción de catálogo: ${itemData.name}`);
       } else {
-        const newItem = {
-          id: Date.now(),
-          ...itemData
-        };
-        setState(prev => ({ ...prev, catalog: [...(prev.catalog || []), newItem] }));
-        addLog(`Catálogo actualizado: Agregó opción ${newItem.name} ($${newItem.price})`);
+        addItem('catalog', itemData);
+        addLog(`Catálogo actualizado: Agregó opción ${itemData.name}`);
       }
     }
 
@@ -345,26 +326,37 @@ const GlobalFormModal = () => {
         </div>
       </>
     );
-  } else if (modal.type === 'new_expense' || modal.type === 'edit_expense') {
-    title = modal.type === 'new_expense' ? 'Registrar Egreso Manual' : 'Editar Egreso';
+  } else if (modal.type === 'new_expense' || modal.type === 'edit_expense' || modal.type === 'new_income' || modal.type === 'edit_income') {
+    const isIncome = modal.type.includes('income');
+    title = modal.type.startsWith('new_') ? `Registrar ${isIncome ? 'Ingreso' : 'Egreso'} Manual` : `Editar ${isIncome ? 'Ingreso' : 'Egreso'}`;
     content = (
       <>
         <div className="form-group">
-          <label>Descripción del Gasto</label>
-          <input type="text" name="desc" className="input-field" defaultValue={formData.desc} placeholder="Ej: Suscripciones, Sueldos, Oficina..." required />
+          <label>Descripción del Movimiento</label>
+          <input type="text" name="desc" className="input-field" defaultValue={formData.desc} placeholder={isIncome ? "Ej: Venta de equipo, Bono extra..." : "Ej: Suscripciones, Sueldos, Oficina..."} required />
         </div>
         <div className="form-group">
-          <label>Categoría de Gasto</label>
-          <select name="category" className="input-field" defaultValue={formData.category || 'General'} required>
-            <option value="Operativo">Operativo</option>
-            <option value="Sueldos">Sueldos / Nómina</option>
-            <option value="Suscripciones">Suscripciones / Software</option>
-            <option value="Marketing">Marketing / Publicidad</option>
-            <option value="Servicios">Servicios (Luz, Agua, Internet)</option>
-            <option value="Alquiler">Alquiler / Oficina</option>
-            <option value="Impuestos">Impuestos / Legal</option>
-            <option value="Proveedores">Proveedores</option>
-            <option value="General">General / Otros</option>
+          <label>Categoría</label>
+          <select name="category" className="input-field" defaultValue={formData.category || (isIncome ? 'Ingreso Manual' : 'General')} required>
+            {isIncome ? (
+              <>
+                <option value="Servicios de Agencia">Servicios de Agencia</option>
+                <option value="Ventas">Ventas Generales</option>
+                <option value="Ingreso Manual">Ingreso Manual / Otros</option>
+              </>
+            ) : (
+              <>
+                <option value="Operativo">Operativo</option>
+                <option value="Sueldos">Sueldos / Nómina</option>
+                <option value="Suscripciones">Suscripciones / Software</option>
+                <option value="Marketing">Marketing / Publicidad</option>
+                <option value="Servicios">Servicios (Luz, Agua, Internet)</option>
+                <option value="Alquiler">Alquiler / Oficina</option>
+                <option value="Impuestos">Impuestos / Legal</option>
+                <option value="Proveedores">Proveedores</option>
+                <option value="General">General / Otros</option>
+              </>
+            )}
           </select>
         </div>
         <div className="form-group" style={{ display: 'flex', gap: '1rem' }}>
@@ -373,9 +365,15 @@ const GlobalFormModal = () => {
             <input type="number" name="amount" className="input-field" defaultValue={formData.amount} step="0.01" required />
           </div>
           <div style={{ flex: 1 }}>
-            <label>Fecha de Gasto</label>
+            <label>Fecha de Registro</label>
             <input type="date" name="date" className="input-field" defaultValue={formData.date || new Date().toISOString().split('T')[0]} required />
           </div>
+        </div>
+        <div className="form-group" style={{ marginTop: '0.5rem' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', backgroundColor: 'var(--surface-color)', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.95rem' }}>
+            <input type="checkbox" name="isRecurring" defaultChecked={formData.isRecurring} style={{ width: '1.2rem', height: '1.2rem', accentColor: 'var(--primary-color)' }} />
+            🔁 Registrar como recurrente (Aparecerá automáticamente cada mes a partir de su creación)
+          </label>
         </div>
       </>
     );

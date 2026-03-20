@@ -15,32 +15,49 @@ const Finanzas = () => {
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
 
-  // ── INCOME DATA (auto-generated from other modules) ──
+  // ── FINANCE DATA ──
   const allHostItems = state.hostItems || [];
   const allQuotes = state.quotes || [];
-  const allExpenses = state.finances || [];
+  const allFinances = state.finances || []; // Mixed manual expenses and incomes
   const allClients = state.clients || [];
 
-  // Filter by selected month
+  // Monthly abstract filter for recurring items
+  const monthlyFinances = useMemo(() => {
+    return allFinances.filter(f => {
+      if (!f.date) return false;
+      const d = new Date(f.date);
+      const isThisMonth = d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
+      if (isThisMonth) return true;
+      
+      // Virtual chronologic expansion for recurring items created in the past
+      if (f.isRecurring) {
+        if (d.getFullYear() < selectedYear) return true;
+        if (d.getFullYear() === selectedYear && d.getMonth() <= selectedMonth) return true;
+      }
+      return false;
+    });
+  }, [allFinances, selectedMonth, selectedYear]);
+
+  const monthlyExpenses = monthlyFinances.filter(f => f.type !== 'income');
+  const monthlyManualIncomes = monthlyFinances.filter(f => f.type === 'income');
+
+  // Filter by selected month for non-recurring entities (Host/Quotes)
   const filterByMonth = (date) => {
     if (!date) return false;
     const d = new Date(date);
     return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
   };
 
-  // Monthly data
-  const monthlyExpenses = useMemo(() => allExpenses.filter(e => filterByMonth(e.date)), [allExpenses, selectedMonth, selectedYear]);
   const monthlyHost = useMemo(() => allHostItems.filter(h => filterByMonth(h.dueDate)), [allHostItems, selectedMonth, selectedYear]);
   
   // Income breakdown
   const hostRevenue = monthlyHost.reduce((acc, h) => acc + (h.cost || 0), 0);
   const quotesRevenue = allQuotes.filter(q => filterByMonth(q.date)).reduce((acc, q) => acc + (q.total || 0), 0);
+  const manualRevenue = monthlyManualIncomes.reduce((acc, i) => acc + (i.amount || 0), 0);
   
-  // If no monthly quotes, use a proportional base from total
-  const totalQuotesAllTime = allQuotes.reduce((acc, q) => acc + (q.total || 0), 0);
-  const effectiveQuotesRevenue = quotesRevenue > 0 ? quotesRevenue : (allQuotes.length === 0 ? 0 : 0);
+  const effectiveQuotesRevenue = quotesRevenue > 0 ? quotesRevenue : 0;
   
-  const totalIncome = hostRevenue + effectiveQuotesRevenue;
+  const totalIncome = hostRevenue + effectiveQuotesRevenue + manualRevenue;
   const totalExpense = monthlyExpenses.reduce((acc, e) => acc + (e.amount || 0), 0);
   const balance = totalIncome - totalExpense;
 
@@ -51,10 +68,15 @@ const Finanzas = () => {
     const monthlyBreakdown = [];
     
     for (let m = 0; m <= selectedMonth; m++) {
-      const mExpenses = allExpenses.filter(e => {
-        const d = new Date(e.date);
-        return d.getMonth() === m && d.getFullYear() === selectedYear;
+      const mFinances = allFinances.filter(f => {
+        const d = new Date(f.date);
+        if (d.getMonth() === m && d.getFullYear() === selectedYear) return true;
+        if (f.isRecurring && (d.getFullYear() < selectedYear || (d.getFullYear() === selectedYear && d.getMonth() <= m))) return true;
+        return false;
       });
+      const mExpensesTotal = mFinances.filter(f => f.type !== 'income').reduce((a, e) => a + (e.amount || 0), 0);
+      const mManualIncTotal = mFinances.filter(f => f.type === 'income').reduce((a, i) => a + (i.amount || 0), 0);
+
       const mHosts = allHostItems.filter(h => {
         const d = new Date(h.dueDate);
         return d.getMonth() === m && d.getFullYear() === selectedYear;
@@ -64,17 +86,16 @@ const Finanzas = () => {
         return d.getMonth() === m && d.getFullYear() === selectedYear;
       });
       
-      const mIncome = mHosts.reduce((a, h) => a + (h.cost || 0), 0) + mQuotes.reduce((a, q) => a + (q.total || 0), 0);
-      const mExpenseTotal = mExpenses.reduce((a, e) => a + (e.amount || 0), 0);
+      const mIncome = mHosts.reduce((a, h) => a + (h.cost || 0), 0) + mQuotes.reduce((a, q) => a + (q.total || 0), 0) + mManualIncTotal;
       
       accIncome += mIncome;
-      accExpense += mExpenseTotal;
+      accExpense += mExpensesTotal;
       
       monthlyBreakdown.push({
         month: MONTHS_ES[m],
         income: mIncome,
-        expense: mExpenseTotal,
-        balance: mIncome - mExpenseTotal,
+        expense: mExpensesTotal,
+        balance: mIncome - mExpensesTotal,
         accIncome,
         accExpense,
         accBalance: accIncome - accExpense
@@ -82,7 +103,7 @@ const Finanzas = () => {
     }
     
     return { monthlyBreakdown, accIncome, accExpense, accBalance: accIncome - accExpense };
-  }, [allExpenses, allHostItems, allQuotes, selectedMonth, selectedYear]);
+  }, [allFinances, allHostItems, allQuotes, selectedMonth, selectedYear]);
 
   // Expense by category
   const expenseByCategory = useMemo(() => {
@@ -132,6 +153,7 @@ const Finanzas = () => {
       body: [
         ['Renovaciones de Hosting', `$${hostRevenue.toFixed(2)}`],
         ['Cotizaciones / Proformas', `$${effectiveQuotesRevenue.toFixed(2)}`],
+        ['Ingresos Manuales / Otros', `$${manualRevenue.toFixed(2)}`],
         ['', ''],
         ['TOTAL INGRESOS', `$${totalIncome.toFixed(2)}`],
       ],
@@ -140,7 +162,7 @@ const Finanzas = () => {
       headStyles: { textColor: [150, 150, 150], fontStyle: 'bold' },
       columnStyles: { 1: { halign: 'right' } },
       didParseCell: (data) => {
-        if (data.row.index === 3) {
+        if (data.row.index === 4) {
           data.cell.styles.fontStyle = 'bold';
           data.cell.styles.textColor = [40, 167, 69];
         }
@@ -249,6 +271,9 @@ const Finanzas = () => {
               {[2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
+          {tab === 'ingresos' && (
+            <button className="btn-primary" onClick={() => openFormModal('new_income')}><MdAdd /> Registrar Ingreso Automático</button>
+          )}
           {tab === 'egresos' && (
             <button className="btn-primary" onClick={() => openFormModal('new_expense')}><MdAdd /> Registrar Egreso</button>
           )}
@@ -396,6 +421,27 @@ const Finanzas = () => {
                     </div>
                  </div>
              </div>
+             
+             {/* Manual Incomes Loop */}
+             {monthlyManualIncomes.map(inc => (
+                <div key={inc.id} className="module-card" style={{ borderLeft: '4px solid var(--status-ok)', position: 'relative' }}>
+                  <div className="card-top-actions" style={{ position: 'absolute', top: '10px', right: '10px' }}>
+                     <button className="icon-btn edit" onClick={() => openFormModal('edit_income', inc)}><MdEdit /></button>
+                     <button className="icon-btn danger" onClick={() => deleteItem('finances', inc.id)}><MdDelete /></button>
+                  </div>
+                  <div className="module-card-body">
+                    <h3 className="card-title" style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {inc.desc}
+                      {inc.isRecurring && <span style={{ fontSize: '0.65rem', padding: '2px 6px', backgroundColor: 'var(--bg-color)', borderRadius: '12px', border: '1px solid var(--border-color)', color: 'var(--text-main)' }}>🔁</span>}
+                    </h3>
+                    {inc.category && <span style={{ fontSize: '0.75rem', padding: '2px 8px', backgroundColor: 'var(--bg-color)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>{inc.category}</span>}
+                    <p className="card-detail code-text" style={{ marginTop: '0.5rem' }}>Creado: {new Date(inc.date).toLocaleDateString()}</p>
+                    <div style={{ marginTop: '1rem' }}>
+                       <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--status-ok)' }}>+${(inc.amount || 0).toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+             ))}
           </div>
         )}
 
@@ -409,9 +455,12 @@ const Finanzas = () => {
                      <button className="icon-btn danger" onClick={() => deleteItem('finances', exp.id)}><MdDelete /></button>
                   </div>
                   <div className="module-card-body">
-                    <h3 className="card-title" style={{ fontSize: '1.1rem' }}>{exp.desc}</h3>
+                    <h3 className="card-title" style={{ fontSize: '1.1rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      {exp.desc}
+                      {exp.isRecurring && <span style={{ fontSize: '0.65rem', padding: '2px 6px', backgroundColor: 'var(--bg-color)', borderRadius: '12px', border: '1px solid var(--border-color)', color: 'var(--text-main)' }}>🔁</span>}
+                    </h3>
                     {exp.category && <span style={{ fontSize: '0.75rem', padding: '2px 8px', backgroundColor: 'var(--bg-color)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>{exp.category}</span>}
-                    <p className="card-detail code-text" style={{ marginTop: '0.5rem' }}>{new Date(exp.date).toLocaleDateString()}</p>
+                    <p className="card-detail code-text" style={{ marginTop: '0.5rem' }}>Creado: {new Date(exp.date).toLocaleDateString()}</p>
                     <div style={{ marginTop: '1rem' }}>
                        <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--status-danger)' }}>-${(exp.amount || 0).toFixed(2)}</span>
                     </div>
@@ -444,6 +493,12 @@ const Finanzas = () => {
                   <span>Cotizaciones / Proformas</span>
                   <span style={{ fontWeight: 600 }}>${effectiveQuotesRevenue.toFixed(2)}</span>
                 </div>
+                {monthlyManualIncomes.map(i => (
+                  <div key={i.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem' }}>
+                    <span>{i.desc} {i.isRecurring && '🔁'} <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>({i.category})</span></span>
+                    <span style={{ fontWeight: 600 }}>${(i.amount || 0).toFixed(2)}</span>
+                  </div>
+                ))}
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1rem', fontWeight: 700, color: 'var(--status-ok)', marginTop: '0.8rem', padding: '0.5rem 0', borderTop: '1px solid var(--border-color)' }}>
                 <span>TOTAL INGRESOS</span>
@@ -457,7 +512,7 @@ const Finanzas = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', paddingLeft: '1rem' }}>
                 {monthlyExpenses.length > 0 ? monthlyExpenses.map(e => (
                   <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem' }}>
-                    <span>{e.desc} <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>({e.category || 'General'})</span></span>
+                    <span>{e.desc} {e.isRecurring && '🔁'} <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>({e.category || 'General'})</span></span>
                     <span style={{ fontWeight: 600 }}>-${(e.amount || 0).toFixed(2)}</span>
                   </div>
                 )) : (
