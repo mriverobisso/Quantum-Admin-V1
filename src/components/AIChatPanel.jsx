@@ -3,8 +3,9 @@ import { useGlobalContext } from '../context/GlobalContext';
 import { MdClose, MdSend, MdSearch, MdAutoAwesome, MdAttachFile } from 'react-icons/md';
 import './AIChatPanel.css';
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+// Clave API inyectada directamente para bypassear problemas de caché de entorno de Vercel
+const GEMINI_API_KEY = 'AIzaSyC3xJzgvJ6nQH_UAxszLizWaAEL-Tyjbfo';
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 const QUICK_ACTIONS = [
   { label: '☀️ Briefing del día', prompt: 'Dame un briefing completo del día de hoy. Revisa mis tareas pendientes, tickets abiertos, dominios por vencer, y recomiéndame las mejores acciones a tomar priorizando lo más urgente.' },
