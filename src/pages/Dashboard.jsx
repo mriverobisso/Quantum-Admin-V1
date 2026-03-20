@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useGlobalContext } from '../context/GlobalContext';
 import { MdCheckCircle, MdWarning, MdInfo, MdSupportAgent, MdAttachMoney, MdOutlineDns } from 'react-icons/md';
 import './Dashboard.css';
@@ -16,7 +17,8 @@ const getSemaphoreColor = (dueDate) => {
 
 const Dashboard = () => {
   const { state, setPreview } = useGlobalContext();
-  const { clients, tasks, hostItems, tickets, finances, quotes } = state;
+  const { clients, tasks, hostItems, tickets, finances, quotes, currentUser } = state;
+  const navigate = useNavigate();
 
   // Calculo KPIs
   const openTickets = tickets.filter(t => t.status !== 'resuelto').length;
@@ -27,8 +29,8 @@ const Dashboard = () => {
     return diffDays >= 0 && diffDays <= 30; // Vencen en < 30 días
   }).length;
 
-  const currentMonthRevenue = (quotes?.reduce((acc, q) => acc + q.total, 0) || 1250) + 
-                              (hostItems?.reduce((acc, h) => acc + h.cost, 0) || 120);
+  const currentMonthRevenue = (quotes?.length ? quotes.reduce((acc, q) => acc + q.total, 0) : 0) + 
+                              (hostItems?.length ? hostItems.reduce((acc, h) => acc + h.cost, 0) : 0);
 
   // Pendientes de la semana (próximos 7 días)
   const weekTasks = tasks.filter(t => {
@@ -73,7 +75,7 @@ const Dashboard = () => {
 
       {/* KPI Cards (Reengineered) */}
       <div className="metrics-grid">
-        <div className="metric-card" onClick={() => window.location.href='/support'}>
+        <div className="metric-card" onClick={() => navigate('/support')}>
           <div className="metric-icon support" style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' }}>
              <MdSupportAgent />
           </div>
@@ -83,7 +85,7 @@ const Dashboard = () => {
           </div>
         </div>
         
-        <div className="metric-card" onClick={() => window.location.href='/tech'}>
+        <div className="metric-card" onClick={() => navigate('/tech')}>
           <div className="metric-icon tech" style={{ backgroundColor: 'rgba(253, 126, 20, 0.1)', color: 'var(--status-warning)' }}>
              <MdOutlineDns />
           </div>
@@ -93,15 +95,17 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="metric-card" onClick={() => window.location.href='/finances'}>
-          <div className="metric-icon crm" style={{ backgroundColor: 'rgba(40, 167, 69, 0.1)', color: 'var(--status-ok)' }}>
-             <MdAttachMoney />
+        {currentUser?.role === 'Administrador' && (
+          <div className="metric-card" onClick={() => navigate('/finances')}>
+            <div className="metric-icon crm" style={{ backgroundColor: 'rgba(40, 167, 69, 0.1)', color: 'var(--status-ok)' }}>
+               <MdAttachMoney />
+            </div>
+            <div className="metric-info">
+              <h3>${currentMonthRevenue.toFixed(2)}</h3>
+              <p>Facturación (Mes)</p>
+            </div>
           </div>
-          <div className="metric-info">
-            <h3>${currentMonthRevenue.toFixed(2)}</h3>
-            <p>Facturación (Mes)</p>
-          </div>
-        </div>
+        )}
       </div>
 
       <div className="dashboard-layout">
