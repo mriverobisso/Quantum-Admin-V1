@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { db } from '../firebase';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc, updateDoc, onSnapshot, collection } from 'firebase/firestore';
 
 const GlobalContext = createContext();
 
@@ -50,20 +50,8 @@ const initialMockState = {
   logs: []
 };
 
-// Helper: persist state to Firestore (debounced)
-let saveTimeout = null;
-const saveToFirestore = (newState) => {
-  clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(async () => {
-    try {
-      await setDoc(doc(db, 'appState', 'quantum_main'), newState);
-    } catch (err) {
-      console.error('Firestore save error:', err);
-      // Fallback: save to localStorage
-      localStorage.setItem('quantum_state', JSON.stringify(newState));
-    }
-  }, 500); // Debounce 500ms to avoid excessive writes
-};
+// We no longer use a single macro-document, instead we sync individual collections
+const COLLECTIONS = ['clients', 'tasks', 'hostItems', 'tickets', 'quotes', 'finances', 'catalog', 'logs', 'users'];
 
 export const GlobalProvider = ({ children }) => {
   const [state, setState] = useState(() => {
@@ -78,34 +66,50 @@ export const GlobalProvider = ({ children }) => {
   const [previewModal, setPreviewModal] = useState({ isOpen: false, type: null, id: null });
   const [formModal, setFormModal] = useState({ isOpen: false, type: null, data: null });
 
-  // ── FIRESTORE REAL-TIME LISTENER ──
+  // ── FIRESTORE REAL-TIME MULTI-COLLECTION LISTENERS ──
   useEffect(() => {
-    const docRef = doc(db, 'appState', 'quantum_main');
+    const unsubscribes = [];
+    let loadedCount = 0;
 
-    const unsubscribe = onSnapshot(docRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const remoteData = snapshot.data();
+    COLLECTIONS.forEach(colName => {
+      const q = collection(db, colName);
+      const unsub = onSnapshot(q, (snapshot) => {
+        const items = snapshot.docs.map(docSnap => ({ ...docSnap.data(), id: docSnap.id }));
+        
+        // If collection is initially empty, we might want to seed it from local
+        if (items.length === 0 && initialMockState[colName]) {
+          /* Only seed if completely empty (first time open) 
+             We skip automatic seeding here to avoid duplicates, 
+             the migration script will handle initial populating */
+        }
+
         isRemoteUpdate.current = true;
-        setState(remoteData);
-        // Also keep localStorage as a cache
-        localStorage.setItem('quantum_state', JSON.stringify(remoteData));
-        setSyncStatus('synced');
-      } else {
-        // First time: seed Firestore with initial/local state
-        const localSaved = localStorage.getItem('quantum_state');
-        const seedData = localSaved ? JSON.parse(localSaved) : initialMockState;
-        setDoc(docRef, seedData).catch(console.error);
-        setSyncStatus('synced');
-      }
-      setLoading(false);
-    }, (error) => {
-      console.error('Firestore listener error:', error);
-      setSyncStatus('offline');
-      setLoading(false);
-      // App will still work from localStorage
+        setState(prev => ({ ...prev, [colName]: items }));
+        
+        // Count initial loads and mark synced
+        loadedCount++;
+        if (loadedCount >= COLLECTIONS.length) {
+          setSyncStatus('synced');
+          setLoading(false);
+        }
+      }, (error) => {
+        console.error(`Firestore listener error on ${colName}:`, error);
+        setSyncStatus('offline');
+        setLoading(false);
+      });
+      unsubscribes.push(unsub);
     });
 
-    return () => unsubscribe();
+    // We also need to listen to the Settings "singleton" document
+    const settingsSub = onSnapshot(doc(db, 'settings', 'main'), (docSnap) => {
+      if (docSnap.exists()) {
+        isRemoteUpdate.current = true;
+        setState(prev => ({ ...prev, settings: docSnap.data() }));
+      }
+    });
+    unsubscribes.push(settingsSub);
+
+    return () => unsubscribes.forEach(fn => fn());
   }, []);
 
   // ── PERSIST STATE CHANGES TO FIRESTORE ──
@@ -117,45 +121,51 @@ export const GlobalProvider = ({ children }) => {
       document.body.classList.remove('dark-mode');
     }
 
-    // Skip saving to Firestore if the change came FROM Firestore
+    // Skip saving to localStorage if the change came FROM Firestore
     if (isRemoteUpdate.current) {
       isRemoteUpdate.current = false;
       return;
     }
 
-    // Save to Firestore (debounced) + localStorage
+    // Keep localStorage as a purely offline/cache fallback
     localStorage.setItem('quantum_state', JSON.stringify(state));
-    saveToFirestore(state);
   }, [state]);
 
-  // ── STATE MUTATION FUNCTIONS (unchanged API) ──
-  const updateSetting = (key, value) => {
-    setState(prev => ({
-      ...prev,
-      settings: { ...prev.settings, [key]: value },
-      logs: [{ date: new Date().toISOString(), user: 'Admin', action: `Actualizó configuración: ${key}` }, ...prev.logs]
-    }));
+  // ── STATE MUTATION FUNCTIONS (FIRESTORE DIRECT) ──
+  const updateSetting = async (key, value) => {
+    try {
+      const newSettings = { ...state.settings, [key]: value };
+      await setDoc(doc(db, 'settings', 'main'), newSettings, { merge: true });
+      addLog(`Actualizó configuración: ${key}`);
+    } catch(err) { console.error(err); }
   };
 
-  const updateItem = (collection, id, newData) => {
-    setState(prev => ({
-      ...prev,
-      [collection]: (prev[collection] || []).map(i => i.id === id ? { ...i, ...newData } : i)
-    }));
+  const updateItem = async (colName, id, newData) => {
+    if (!COLLECTIONS.includes(colName)) return; // Prevents writing local-only keys
+    try {
+      await updateDoc(doc(db, colName, id), newData);
+    } catch(err) { console.error('Error updating:', err); }
   };
 
-  const addItem = (collection, itemData) => {
-    setState(prev => ({
-      ...prev,
-      [collection]: [itemData, ...(prev[collection] || [])]
-    }));
+  const addItem = async (colName, itemData) => {
+    if (!COLLECTIONS.includes(colName)) return;
+    try {
+      // Use the provided ID or let Firestore generate it if we used addDoc, but we want to stick to itemData.id
+      const idToUse = itemData.id || `item_${Date.now()}`;
+      await setDoc(doc(db, colName, idToUse), { ...itemData, id: idToUse });
+    } catch(err) { console.error('Error adding:', err); }
   };
 
-  const addLog = (action) => {
-    setState(prev => ({
-      ...prev,
-      logs: [{ date: new Date().toISOString(), user: 'Mario', action }, ...(prev.logs || [])]
-    }));
+  const addLog = async (action) => {
+    try {
+      const logId = `log_${Date.now()}`;
+      await setDoc(doc(db, 'logs', logId), {
+        id: logId,
+        date: new Date().toISOString(),
+        user: state.currentUser?.name || 'Sistema',
+        action
+      });
+    } catch(err) { console.error(err); }
   };
 
   const setPreview = (type, id) => {
@@ -170,10 +180,13 @@ export const GlobalProvider = ({ children }) => {
 
   const closeFormModal = () => setFormModal({ isOpen: false, type: null, data: null });
 
-  const deleteItem = (collection, id) => {
+  const deleteItem = async (colName, id) => {
+    if (!COLLECTIONS.includes(colName)) return;
     if(window.confirm('¿Seguro que deseas eliminar este registro permanentemente?')) {
-      setState(prev => ({ ...prev, [collection]: (prev[collection] || []).filter(i => i.id !== id) }));
-      addLog(`Eliminó registro ${id} de ${collection}`);
+      try {
+        await deleteDoc(doc(db, colName, id));
+        addLog(`Eliminó registro ${id} de ${colName}`);
+      } catch(err) { console.error('Error deleting:', err); }
     }
   };
 
