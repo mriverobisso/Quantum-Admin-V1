@@ -49,7 +49,7 @@ const Layout = () => {
           {isAdmin && (
             <button 
               className="fab-ai" 
-              aria-label="Quantum AI" 
+              aria-label="ANTU IA" 
               onClick={() => setAIChatOpen(!isAIChatOpen)}
               style={isAIChatOpen ? { background: 'linear-gradient(135deg, #2a9d8f, #2575fc)', boxShadow: '0 4px 20px rgba(37,117,252,0.4)' } : {}}
             >

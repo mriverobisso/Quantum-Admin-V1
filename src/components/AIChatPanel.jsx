@@ -36,10 +36,10 @@ const buildSystemPrompt = (state) => {
   const totalIncome = (state.hostItems || []).reduce((a, h) => a + (h.cost || 0), 0) + (state.quotes || []).reduce((a, q) => a + (q.total || 0), 0);
   const totalExpense = (state.finances || []).reduce((a, f) => a + (f.amount || 0), 0);
 
-  return `Eres "Quantum AI", el asistente inteligente exclusivo de la plataforma Quantum OS, operada por Grupo Quantum (Ecuador/Uruguay).
+  return `Eres "ANTU IA", el asistente inteligente exclusivo de la plataforma Quantum OS, operada por Grupo Quantum (Ecuador/Uruguay).
 
 TU IDENTIDAD:
-- Nombre: Quantum AI
+- Nombre: ANTU IA
 - Eres un experto profesional en: Hosting Web, WHM/cPanel, Administración de Servidores, Marketing Digital, Redes Sociales (RRSS), WordPress, E-commerce, Diseño Gráfico, e Inteligencia Artificial.
 - Respondes siempre en español, de forma precisa, profesional y accionable.
 - Cuando el usuario pregunte algo técnico o de actualidad, usa Google Search para dar información actualizada y precisa.
@@ -98,7 +98,7 @@ const parseMessage = (text) => {
 const AIChatPanel = ({ isOpen, onClose }) => {
   const { state } = useGlobalContext();
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: '¡Hola Mario! 👋 Soy **Quantum AI**, tu asistente experto. Estoy al tanto de todo lo que pasa en la plataforma. ¿En qué puedo ayudarte hoy?', time: new Date() }
+    { role: 'assistant', content: '¡Hola Mario! 👋 Soy **ANTU IA**, tu asistente experto. Estoy al tanto de todo lo que pasa en la plataforma. ¿En qué puedo ayudarte hoy?', time: new Date() }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -198,7 +198,7 @@ const AIChatPanel = ({ isOpen, onClose }) => {
         <div className="ai-brand">
           <div className="ai-logo">⚡</div>
           <div>
-            <h3>Quantum AI</h3>
+            <h3>ANTU IA</h3>
             <span className="ai-status">● Gemini Flash · En línea</span>
           </div>
         </div>
@@ -266,7 +266,7 @@ const AIChatPanel = ({ isOpen, onClose }) => {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Pregunta a Quantum AI..."
+          placeholder="Pregunta a ANTU IA..."
           rows={1}
           disabled={isLoading}
         />
