@@ -182,14 +182,23 @@ const GlobalFormModal = () => {
          setState(prev => ({ ...prev, tasks: [...prev.tasks, newDesignTask] }));
          addLog(`Solicitó pieza gráfica: ${newDesignTask.title} formato ${newDesignTask.format}`);
       }
-    } else if (modal.type === 'new_catalog_item') {
-      const newItem = {
-        id: Date.now(),
+    } else if (modal.type === 'new_catalog_item' || modal.type === 'edit_catalog_item') {
+      const itemData = {
         name: formVals.name,
         price: Number(formVals.price)
       };
-      setState(prev => ({ ...prev, catalog: [...(prev.catalog || []), newItem] }));
-      addLog(`Catálogo actualizado: Agregó opción ${newItem.name} ($${newItem.price})`);
+      
+      if (modal.type === 'edit_catalog_item') {
+        updateItem('catalog', formData.id, itemData);
+        addLog(`Editó opción de catálogo: ${itemData.name}`);
+      } else {
+        const newItem = {
+          id: Date.now(),
+          ...itemData
+        };
+        setState(prev => ({ ...prev, catalog: [...(prev.catalog || []), newItem] }));
+        addLog(`Catálogo actualizado: Agregó opción ${newItem.name} ($${newItem.price})`);
+      }
     }
 
     handleClose();
@@ -460,17 +469,17 @@ const GlobalFormModal = () => {
         </div>
       </>
     );
-  } else if (modal.type === 'new_catalog_item') {
-    title = 'Añadir al Catálogo de Servicios';
+  } else if (modal.type === 'new_catalog_item' || modal.type === 'edit_catalog_item') {
+    title = modal.type === 'new_catalog_item' ? 'Añadir al Catálogo de Servicios' : 'Editar Servicio';
     content = (
       <>
         <div className="form-group">
           <label>Nombre del Servicio / Producto</label>
-          <input type="text" name="name" className="input-field" placeholder="Ej: Diseño de Logotipo" required />
+          <input type="text" name="name" className="input-field" defaultValue={formData.name} placeholder="Ej: Diseño de Logotipo" required />
         </div>
         <div className="form-group">
           <label>Precio Unitario Base ($)</label>
-          <input type="number" name="price" className="input-field" step="0.01" min="0" required />
+          <input type="number" name="price" className="input-field" defaultValue={formData.price} step="0.01" min="0" required />
         </div>
       </>
     );

@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 import { useGlobalContext } from '../context/GlobalContext';
-import { MdAddShoppingCart, MdPictureAsPdf, MdDeleteOutline, MdAddCircleOutline } from 'react-icons/md';
+import { MdAddShoppingCart, MdPictureAsPdf, MdDeleteOutline, MdAddCircleOutline, MdEdit, MdAssignment, MdViewKanban } from 'react-icons/md';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import './Cotizador.css';
 
+const KANBAN_STAGES = ['Enviada', 'Ajustes', 'Cerrada', 'Descartada'];
+
 const Cotizador = () => {
-  const { state, addLog, openFormModal } = useGlobalContext();
+  const { state, addLog, openFormModal, deleteItem, updateItem, addItem } = useGlobalContext();
+  const [activeTab, setActiveTab] = useState('generator'); // 'generator' or 'kanban'
+  
+  // Generator State
   const [items, setItems] = useState([]);
   const [selectedClientId, setSelectedClientId] = useState('');
   const [notes, setNotes] = useState('');
@@ -14,6 +19,7 @@ const Cotizador = () => {
   
   const quickAdds = state.catalog || [];
   const clients = state.clients || [];
+  const quotes = state.quotes || [];
   const selectedClient = clients.find(c => c.id === selectedClientId);
   
   // Auto-derived from CRM
@@ -33,6 +39,14 @@ const Cotizador = () => {
     setItems(prev => prev.map(i => i.lineId === lineId ? { ...i, [field]: value } : i));
   };
 
+  const handleEditCatalogItem = (item) => {
+    openFormModal('edit_catalog_item', item);
+  };
+
+  const handleDeleteCatalogItem = (id) => {
+    deleteItem('catalog', id);
+  };
+
   // Calculate totals resolving individual item discounts and quantities
   const subtotal = items.reduce((sum, item) => sum + ((item.price * (item.quantity || 1)) * (1 - (item.itemDiscount || 0)/100)), 0);
   const discountTotal = subtotal * (discount / 100);
@@ -45,7 +59,7 @@ const Cotizador = () => {
     }
 
     const doc = new jsPDF();
-    const invoiceNumber = `PF-00${state.quotes?.length + 1 || 1}`;
+    const invoiceNumber = `PF-${Date.now().toString().slice(-4)}`;
     const primaryBlue = [37, 117, 252];
     const textGray = [80, 80, 80];
     const lightBorder = [220, 220, 220];
@@ -72,7 +86,7 @@ const Cotizador = () => {
     doc.setTextColor(textGray[0], textGray[1], textGray[2]);
     doc.text(`Representante: Mario Rivero Bisso`, 196, 30, { align: 'right' });
     doc.setFont("helvetica", "normal");
-    doc.text(`RUC: ${state.settings.ruc}`, 196, 35, { align: 'right' });
+    doc.text(`RUC: ${state.settings?.ruc || 'N/A'}`, 196, 35, { align: 'right' });
     doc.text(`hola@grupoquantum.ec`, 196, 40, { align: 'right' });
     doc.text(`+593 99 819 0428`, 196, 45, { align: 'right' });
     doc.text(`Alborada 14va. - Guayaquil, Ecuador`, 196, 50, { align: 'right' });
@@ -206,8 +220,32 @@ const Cotizador = () => {
     doc.setFont("helvetica", "normal");
     doc.text("by Quantum", 196, footerY + 11, { align: 'right' });
 
-    doc.save(`${invoiceNumber}-${clientName.replace(/\\s+/g, '')}.pdf`);
-    addLog(`Generó Proforma ${invoiceNumber} para ${clientName} por $${total}`);
+    doc.save(`${invoiceNumber}-${clientName.replace(/\s+/g, '')}.pdf`);
+    
+    // Save to History / Kanban
+    const newQuote = {
+      id: `q_${Date.now()}`,
+      invoiceNumber,
+      clientId: selectedClientId,
+      clientName,
+      total,
+      date: new Date().toISOString(),
+      status: 'Enviada',
+      items: items.map(i => ({ name: i.name, quantity: i.quantity, price: i.price }))
+    };
+    addItem('quotes', newQuote);
+    addLog(`Generó y guardó Proforma ${invoiceNumber} para ${clientName} por $${total}`);
+    
+    // Switch to Kanban to see the new quote
+    setActiveTab('kanban');
+    
+    // Reset Form
+    setItems([]);
+  };
+
+  const handleChangeQuoteStatus = (quoteId, newStatus) => {
+    updateItem('quotes', quoteId, { status: newStatus });
+    addLog(`Actualizó estado de la proforma a: ${newStatus}`);
   };
 
   return (
@@ -222,117 +260,185 @@ const Cotizador = () => {
         </button>
       </header>
 
-      <div className="cotizador-layout">
-        <div className="cotizador-invoice">
-          <div className="card invoice-card">
-            <div className="invoice-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-               <div>
-                 <h2>Proforma Actual</h2>
-                 <p>NOTA DE VENTA (Sin IVA)</p>
-               </div>
-               <button className="btn-primary" onClick={handleExportPDF}><MdPictureAsPdf /> Exportar PDF</button>
-            </div>
-            
-            <div className="invoice-client mt-4" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-               <div>
-                 <label>Cliente del CRM (Obligatorio) *</label>
-                 <select className="input-field" value={selectedClientId} onChange={e => setSelectedClientId(e.target.value)} required style={{ fontWeight: selectedClientId ? 'bold' : 'normal' }}>
-                   <option value="">-- Seleccionar Cliente Registrado --</option>
-                   {clients.map(c => <option key={c.id} value={c.id}>{c.name} ({c.ruc})</option>)}
-                 </select>
-                 {!selectedClientId && <p style={{ fontSize: '0.75rem', color: 'var(--status-danger)', marginTop: '0.3rem' }}>⚠ Solo clientes registrados en el CRM</p>}
-               </div>
-               <div>
-                 <label>Contacto (Auto CRM):</label>
-                 <input type="text" className="input-field" value={contactName} readOnly style={{ backgroundColor: 'var(--bg-color)', cursor: 'not-allowed' }} />
-               </div>
-               <div>
-                 <label>Email (Auto CRM):</label>
-                 <input type="email" className="input-field" value={contactEmail} readOnly style={{ backgroundColor: 'var(--bg-color)', cursor: 'not-allowed' }} />
-               </div>
-               <div>
-                 <label>Notas Adicionales (Visible en PDF):</label>
-                 <input type="text" className="input-field" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Ej: Aplica promo 30%" />
-               </div>
-            </div>
-
-            <div className="invoice-items" style={{ marginTop: '1.5rem' }}>
-               {items.map(item => (
-                 <div key={item.lineId} className="invoice-item" style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', alignItems: 'stretch', padding: '1rem', border: '1px solid var(--border-color)', borderRadius: '8px', marginBottom: '1rem', backgroundColor: 'var(--bg-color)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                       <span style={{ fontWeight: 'bold', color: 'var(--primary-color)' }}>{item.name}</span>
-                       <button className="icon-btn danger" style={{ padding: '0.3rem', fontSize: '1.2rem' }} onClick={() => handleRemoveItem(item.lineId)}><MdDeleteOutline/></button>
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                       <div style={{ flex: '3 1 200px' }}>
-                         <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Descripción del servicio</label>
-                         <input type="text" className="input-field" style={{ margin: 0, padding: '0.5rem' }} placeholder="Detalles específicos" value={item.description || ''} onChange={e => updateLine(item.lineId, 'description', e.target.value)} />
-                       </div>
-                       <div style={{ flex: '1 1 80px' }}>
-                         <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Cant.</label>
-                         <input type="number" className="input-field" style={{ margin: 0, padding: '0.5rem' }} value={item.quantity || 1} min="1" onChange={e => updateLine(item.lineId, 'quantity', Number(e.target.value))} />
-                       </div>
-                       <div style={{ flex: '1 1 100px' }}>
-                         <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>P. Unit ($)</label>
-                         <input type="number" className="input-field" style={{ margin: 0, padding: '0.5rem' }} value={item.price} step="0.01" onChange={e => updateLine(item.lineId, 'price', Number(e.target.value))} />
-                       </div>
-                       <div style={{ flex: '1 1 80px' }}>
-                         <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Desc (%)</label>
-                         <input type="number" className="input-field" style={{ margin: 0, padding: '0.5rem' }} value={item.itemDiscount || 0} min="0" max="100" onChange={e => updateLine(item.lineId, 'itemDiscount', Number(e.target.value))} />
-                       </div>
-                    </div>
-                 </div>
-               ))}
-               {items.length === 0 && <p className="empty-items" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Selecciona ítems del catálogo para armar la proforma.</p>}
-            </div>
-
-            <div className="invoice-totals">
-               <div className="tot-row">
-                 <span>Subtotal Base</span>
-                 <span>${subtotal.toFixed(2)}</span>
-               </div>
-               <div className="tot-row discount-row">
-                 <span>Descuento Comercial (%)</span>
-                 <input 
-                    type="number" 
-                    min="0" max="100" 
-                    className="discount-input" 
-                    value={discount} 
-                    onChange={e => setDiscount(Number(e.target.value))} 
-                 />
-               </div>
-               <div className="tot-row format-total">
-                 <span>T O T A L</span>
-                 <span className="grand-total">${total.toFixed(2)}</span>
-               </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="cotizador-catalog">
-          <div className="card section-card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-               <h2>Catálogo de Servicios</h2>
-            </div>
-            
-            <div className="quick-add-grid mt-4">
-               {quickAdds.map(item => (
-                 <div key={item.id} className="quick-card" style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', cursor: 'default' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
-                       <div className="qc-info">
-                         <h4 style={{ whiteSpace: 'normal', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{item.name}</h4>
-                         <span style={{ color: 'var(--primary-color)', fontSize: '0.9rem' }}>${item.price.toFixed(2)}</span>
-                       </div>
-                    </div>
-                    <button className="btn-primary" style={{ padding: '0.4rem', fontSize: '0.85rem', width: '100%', justifyContent: 'center' }} onClick={() => handleAddItem(item)}>
-                       <MdAddShoppingCart /> Módulo
-                    </button>
-                 </div>
-               ))}
-            </div>
-          </div>
-        </div>
+      {/* Tabs */}
+      <div className="cotizador-tabs">
+        <button 
+          className={`tab-btn ${activeTab === 'generator' ? 'active' : ''}`} 
+          onClick={() => setActiveTab('generator')}
+        >
+          <MdAssignment /> Generar Proforma
+        </button>
+        <button 
+          className={`tab-btn ${activeTab === 'kanban' ? 'active' : ''}`} 
+          onClick={() => setActiveTab('kanban')}
+        >
+          <MdViewKanban /> Historial (Kanban)
+        </button>
       </div>
+
+      {activeTab === 'generator' && (
+        <div className="cotizador-layout">
+          <div className="cotizador-invoice">
+            <div className="card invoice-card">
+              <div className="invoice-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                 <div>
+                   <h2>Proforma Actual</h2>
+                   <p>NOTA DE VENTA (Sin IVA)</p>
+                 </div>
+                 <button className="btn-primary" onClick={handleExportPDF}><MdPictureAsPdf /> Guardar y Exportar PDF</button>
+              </div>
+              
+              <div className="invoice-client mt-4" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                 <div>
+                   <label>Cliente del CRM (Obligatorio) *</label>
+                   <select className="input-field" value={selectedClientId} onChange={e => setSelectedClientId(e.target.value)} required style={{ fontWeight: selectedClientId ? 'bold' : 'normal' }}>
+                     <option value="">-- Seleccionar Cliente Registrado --</option>
+                     {clients.map(c => <option key={c.id} value={c.id}>{c.name} ({c.ruc})</option>)}
+                   </select>
+                   {!selectedClientId && <p style={{ fontSize: '0.75rem', color: 'var(--status-danger)', marginTop: '0.3rem' }}>⚠ Solo clientes registrados en el CRM</p>}
+                 </div>
+                 <div>
+                   <label>Contacto (Auto CRM):</label>
+                   <input type="text" className="input-field" value={contactName} readOnly style={{ backgroundColor: 'var(--bg-color)', cursor: 'not-allowed' }} />
+                 </div>
+                 <div>
+                   <label>Email (Auto CRM):</label>
+                   <input type="email" className="input-field" value={contactEmail} readOnly style={{ backgroundColor: 'var(--bg-color)', cursor: 'not-allowed' }} />
+                 </div>
+                 <div>
+                   <label>Notas Adicionales (Visible en PDF):</label>
+                   <input type="text" className="input-field" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Ej: Aplica promo 30%" />
+                 </div>
+              </div>
+
+              <div className="invoice-items" style={{ marginTop: '1.5rem' }}>
+                 {items.map(item => (
+                   <div key={item.lineId} className="invoice-item">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                         <span style={{ fontWeight: 'bold', color: 'var(--primary-color)' }}>{item.name}</span>
+                         <button className="icon-btn danger" style={{ padding: '0.3rem', fontSize: '1.2rem', background: 'none', border:'none', color: 'var(--status-danger)', cursor: 'pointer' }} onClick={() => handleRemoveItem(item.lineId)}>
+                           <MdDeleteOutline/>
+                         </button>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                         <div style={{ flex: '3 1 200px' }}>
+                           <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Descripción del servicio</label>
+                           <input type="text" className="input-field" style={{ margin: 0, padding: '0.5rem' }} placeholder="Detalles específicos" value={item.description || ''} onChange={e => updateLine(item.lineId, 'description', e.target.value)} />
+                         </div>
+                         <div style={{ flex: '1 1 80px' }}>
+                           <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Cant.</label>
+                           <input type="number" className="input-field" style={{ margin: 0, padding: '0.5rem' }} value={item.quantity || 1} min="1" onChange={e => updateLine(item.lineId, 'quantity', Number(e.target.value))} />
+                         </div>
+                         <div style={{ flex: '1 1 100px' }}>
+                           <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>P. Unit ($)</label>
+                           <input type="number" className="input-field" style={{ margin: 0, padding: '0.5rem' }} value={item.price} step="0.01" onChange={e => updateLine(item.lineId, 'price', Number(e.target.value))} />
+                         </div>
+                         <div style={{ flex: '1 1 80px' }}>
+                           <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Desc (%)</label>
+                           <input type="number" className="input-field" style={{ margin: 0, padding: '0.5rem' }} value={item.itemDiscount || 0} min="0" max="100" onChange={e => updateLine(item.lineId, 'itemDiscount', Number(e.target.value))} />
+                         </div>
+                      </div>
+                   </div>
+                 ))}
+                 {items.length === 0 && <p className="empty-items" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Selecciona ítems del catálogo para armar la proforma.</p>}
+              </div>
+
+              <div className="invoice-totals">
+                 <div className="tot-row">
+                   <span>Subtotal Base</span>
+                   <span>${subtotal.toFixed(2)}</span>
+                 </div>
+                 <div className="tot-row discount-row">
+                   <span>Descuento Comercial (%)</span>
+                   <input 
+                      type="number" 
+                      min="0" max="100" 
+                      className="discount-input" 
+                      value={discount} 
+                      onChange={e => setDiscount(Number(e.target.value))} 
+                   />
+                 </div>
+                 <div className="tot-row format-total">
+                   <span>T O T A L</span>
+                   <span className="grand-total">${total.toFixed(2)}</span>
+                 </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="cotizador-catalog">
+            <div className="card section-card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                 <h2>Catálogo de Servicios</h2>
+              </div>
+              
+              <div className="quick-add-grid mt-4">
+                 {quickAdds.map(item => (
+                   <div key={item.id} className="quick-card">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
+                         <div className="qc-info">
+                           <h4 style={{ whiteSpace: 'normal', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{item.name}</h4>
+                           <span>${item.price.toFixed(2)}</span>
+                         </div>
+                      </div>
+                      <div className="qc-actions">
+                         <button className="btn-primary" style={{ padding: '0.4rem', fontSize: '0.85rem', flex: 1, justifyContent: 'center' }} onClick={() => handleAddItem(item)}>
+                            <MdAddShoppingCart /> Módulo
+                         </button>
+                         <button className="icon-btn" onClick={() => handleEditCatalogItem(item)} title="Editar Módulo">
+                            <MdEdit />
+                         </button>
+                         <button className="icon-btn danger" onClick={() => handleDeleteCatalogItem(item.id)} title="Eliminar Módulo">
+                            <MdDeleteOutline />
+                         </button>
+                      </div>
+                   </div>
+                 ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'kanban' && (
+        <div className="quote-kanban mt-4">
+          {KANBAN_STAGES.map(stage => {
+            const stageQuotes = quotes.filter(q => q.status === stage);
+            return (
+              <div key={stage} className="kanban-col">
+                <div className="kanban-col-header">
+                  <span>{stage}</span>
+                  <span className="badge">{stageQuotes.length}</span>
+                </div>
+                <div className="kanban-col-content">
+                  {stageQuotes.map(q => (
+                    <div key={q.id} className="quote-kanban-card">
+                       <div className="qkc-header">
+                          <strong>{q.invoiceNumber}</strong>
+                          <button className="icon-btn danger" style={{border: 'none', background: 'none', color: 'var(--status-danger)', cursor: 'pointer', padding: 0}} onClick={() => deleteItem('quotes', q.id)} title="Eliminar"><MdDeleteOutline/></button>
+                       </div>
+                       <div className="qkc-client">{q.clientName}</div>
+                       <div className="qkc-date">{new Date(q.date).toLocaleDateString()}</div>
+                       <div className="qkc-total">${q.total?.toFixed(2)}</div>
+                       
+                       <div className="qkc-actions">
+                          <select 
+                            value={q.status} 
+                            onChange={(e) => handleChangeQuoteStatus(q.id, e.target.value)}
+                          >
+                            {KANBAN_STAGES.map(s => <option key={s} value={s}>{s}</option>)}
+                          </select>
+                       </div>
+                    </div>
+                  ))}
+                  {stageQuotes.length === 0 && <p style={{fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: '1rem'}}>Sin proformas en este estado</p>}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
     </div>
   );
 };

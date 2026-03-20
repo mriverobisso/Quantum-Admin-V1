@@ -144,6 +144,13 @@ export const GlobalProvider = ({ children }) => {
     }));
   };
 
+  const addItem = (collection, itemData) => {
+    setState(prev => ({
+      ...prev,
+      [collection]: [itemData, ...(prev[collection] || [])]
+    }));
+  };
+
   const addLog = (action) => {
     setState(prev => ({
       ...prev,
@@ -207,7 +214,7 @@ export const GlobalProvider = ({ children }) => {
       state, setState, updateSetting, addLog, 
       previewModal, setPreview, closePreview, 
       formModal, openFormModal, closeFormModal,
-      deleteItem, updateItem, archiveItem, duplicateItem,
+      deleteItem, updateItem, addItem, archiveItem, duplicateItem,
       syncStatus
     }}>
       {children}
