@@ -264,10 +264,16 @@ const Cotizador = () => {
     addLog(`Actualizó estado de la proforma a: ${newStatus}`);
   };
 
-  const handleDeleteQuote = (quote) => {
+  const handleDeleteQuote = async (quote) => {
     if (window.confirm(`¿Seguro que deseas eliminar la proforma ${quote.invoiceNumber}?`)) {
-      setState(prev => ({ ...prev, quotes: (prev.quotes || []).filter(q => q.id !== quote.id) }));
-      addLog(`Eliminó proforma ${quote.invoiceNumber}`);
+      try {
+        const { deleteDoc, doc } = await import('firebase/firestore');
+        const { db } = await import('../firebase');
+        await deleteDoc(doc(db, 'quotes', quote.id));
+        addLog(`Eliminó proforma ${quote.invoiceNumber}`);
+      } catch(err) {
+        console.error('Error eliminando proforma:', err);
+      }
     }
   };
 
