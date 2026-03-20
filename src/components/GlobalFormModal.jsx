@@ -170,7 +170,8 @@ const GlobalFormModal = () => {
     } else if (modal.type === 'new_catalog_item' || modal.type === 'edit_catalog_item') {
       const itemData = {
         name: formVals.name,
-        price: Number(formVals.price)
+        price: Number(formVals.price),
+        description: formVals.description || ''
       };
       
       if (modal.type === 'edit_catalog_item') {
@@ -474,6 +475,10 @@ const GlobalFormModal = () => {
         <div className="form-group">
           <label>Nombre del Servicio / Producto</label>
           <input type="text" name="name" className="input-field" defaultValue={formData.name} placeholder="Ej: Diseño de Logotipo" required />
+        </div>
+        <div className="form-group">
+          <label>Descripción Predeterminada (Opcional)</label>
+          <textarea name="description" className="input-field" rows="3" defaultValue={formData.description} placeholder="Aparecerá pre-cargada al cotizar este servicio..."></textarea>
         </div>
         <div className="form-group">
           <label>Precio Unitario Base ($)</label>

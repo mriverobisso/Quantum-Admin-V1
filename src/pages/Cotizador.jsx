@@ -28,7 +28,7 @@ const Cotizador = () => {
   const contactEmail = selectedClient?.email || '';
 
   const handleAddItem = (item) => {
-    setItems(prev => [...prev, { ...item, lineId: Date.now(), quantity: 1, description: '', itemDiscount: 0 }]);
+    setItems(prev => [...prev, { ...item, lineId: Date.now(), quantity: 1, description: item.description || '', itemDiscount: 0 }]);
   };
 
   const handleRemoveItem = (lineId) => {
