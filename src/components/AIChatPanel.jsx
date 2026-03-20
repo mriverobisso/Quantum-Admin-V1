@@ -3,8 +3,8 @@ import { useGlobalContext } from '../context/GlobalContext';
 import { MdClose, MdSend, MdSearch, MdAutoAwesome, MdAttachFile } from 'react-icons/md';
 import './AIChatPanel.css';
 
-// Clave API inyectada directamente para bypassear problemas de caché de entorno de Vercel
-const GEMINI_API_KEY = 'AIzaSyC3xJzgvJ6nQH_UAxszLizWaAEL-Tyjbfo';
+// Usa la variable de entorno para evitar bloqueos por fuga de credenciales
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 const QUICK_ACTIONS = [
