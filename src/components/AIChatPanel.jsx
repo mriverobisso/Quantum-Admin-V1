@@ -169,7 +169,7 @@ const AIChatPanel = ({ isOpen, onClose }) => {
       history.push({ role: 'user', parts: currentParts });
 
       const requestBody = {
-        system_instruction: {
+        systemInstruction: {
           parts: [{ text: buildSystemPrompt(state) }]
         },
         contents: history,
@@ -188,6 +188,10 @@ const AIChatPanel = ({ isOpen, onClose }) => {
 
       const data = await response.json();
       
+      if (!response.ok) {
+        throw new Error(data.error?.message || `HTTP ${response.status}: Error interno de Gemini.`);
+      }
+      
       let aiText = '';
       let usedSearch = false;
 
@@ -196,14 +200,13 @@ const AIChatPanel = ({ isOpen, onClose }) => {
         if (candidate.content && candidate.content.parts) {
           aiText = candidate.content.parts.map(p => p.text || '').join('');
         }
-        // Check if Google Search was used
         if (candidate.groundingMetadata) {
           usedSearch = true;
         }
       }
 
       if (!aiText) {
-        aiText = 'Lo siento, no pude procesar tu solicitud en este momento. Intenta de nuevo.';
+        aiText = 'Lo siento, no pude entender la respuesta del asistente.';
       }
 
       setMessages(prev => [...prev, { 
@@ -214,9 +217,11 @@ const AIChatPanel = ({ isOpen, onClose }) => {
       }]);
     } catch (err) {
       console.error('Gemini API error:', err);
+      // Extraemos el mensaje de error explícito para guiar al usuario
+      const errDetail = err.message || 'Verifica tu conexión a internet.';
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: '⚠️ Error de conexión con Gemini AI. Verifica tu conexión a internet e inténtalo de nuevo.', 
+        content: `⚠️ **¡Error de Conexión!**\nLa IA de Gemini rechazó la solicitud.\n\n_Detalle técnico: ${errDetail}_\n\nSi el error es "API key not valid", por favor revisa que la llave en Vercel (\`VITE_GEMINI_API_KEY\`) esté guardada correctamente y hayas re-desplegado (redeploy).`, 
         time: new Date() 
       }]);
     } finally {
