@@ -153,10 +153,12 @@ const Cotizador = () => {
          fontStyle: 'bold'
       },
       columnStyles: {
-         2: { halign: 'center' },
-         3: { halign: 'center' },
-         4: { halign: 'center' },
-         5: { halign: 'right' }
+         0: { cellWidth: 35 },
+         1: { cellWidth: 70 },
+         2: { halign: 'center', cellWidth: 15 },
+         3: { halign: 'center', cellWidth: 20 },
+         4: { halign: 'center', cellWidth: 15 },
+         5: { halign: 'right', cellWidth: 25 }
       },
       didDrawCell: (data) => {
          // Create row bottom border
@@ -209,6 +211,14 @@ const Cotizador = () => {
     doc.setFontSize(8);
     doc.setTextColor(150);
     const footerY = doc.internal.pageSize.getHeight() - 20;
+    
+    // Validity Note
+    doc.setFont("helvetica", "italic");
+    doc.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
+    doc.text(`* La presente cotización tiene una validez de 5 días a partir de su emisión.`, 14, footerY - 5);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(150);
     doc.text(`Documento generado por Quantum OS | ${new Date().toLocaleString()}`, 105, footerY, { align: 'center' });
 
     // Antu Brand Mark
@@ -329,8 +339,8 @@ const Cotizador = () => {
                       </div>
                       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                          <div style={{ flex: '3 1 200px' }}>
-                           <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Descripción del servicio</label>
-                           <input type="text" className="input-field" style={{ margin: 0, padding: '0.5rem' }} placeholder="Detalles específicos" value={item.description || ''} onChange={e => updateLine(item.lineId, 'description', e.target.value)} />
+                           <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Detalles del servicio (Capacidad, posteos, notas...)</label>
+                           <textarea className="input-field" style={{ margin: 0, padding: '0.5rem', resize: 'vertical', minHeight: '40px' }} placeholder="Detalles específicos" value={item.description || ''} onChange={e => updateLine(item.lineId, 'description', e.target.value)} rows="2" />
                          </div>
                          <div style={{ flex: '1 1 80px' }}>
                            <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Cant.</label>
