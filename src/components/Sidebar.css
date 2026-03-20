@@ -60,16 +60,16 @@
 
 .main-logo {
   height: 38px;
-  width: auto;
-  min-width: 130px;
+  width: 160px;
   max-width: 100%;
   object-fit: contain;
+  object-position: left center;
   transition: all 0.3s ease;
 }
 
 .icon-logo {
   height: 38px;
-  width: auto;
+  width: 38px;
   min-width: 38px;
   object-fit: contain;
   margin: 0 auto;
