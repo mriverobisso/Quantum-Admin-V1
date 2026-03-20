@@ -3,6 +3,7 @@ import { useGlobalContext } from '../context/GlobalContext';
 import { MdAddShoppingCart, MdPictureAsPdf, MdDeleteOutline, MdAddCircleOutline, MdEdit, MdAssignment, MdViewKanban, MdVisibility } from 'react-icons/md';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { logoBase64 } from '../assets/logoBase64';
 import './Cotizador.css';
 
 const KANBAN_STAGES = ['Enviada', 'Ajustes', 'Cerrada', 'Descartada'];
@@ -71,25 +72,30 @@ const Cotizador = () => {
     doc.text(`Proforma ${invoiceNumber}`, 196, 10, { align: 'right' });
 
     // Logo Text (Top Left)
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(26);
-    doc.setTextColor(80, 80, 80);
-    doc.text("QUANTUM", 14, 30);
+    try {
+      doc.addImage(logoBase64, 'PNG', 14, 15, 60, 13);
+    } catch(e) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(26);
+      doc.setTextColor(80, 80, 80);
+      doc.text("QUANTUM", 14, 30);
+    }
 
     // Agency Details (Top Right)
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
+    doc.setFontSize(11);
     doc.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
-    doc.text("Grupo Quantum", 196, 25, { align: 'right' });
+    doc.text("Mario Rivero Bisso", 196, 20, { align: 'right' });
     
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(textGray[0], textGray[1], textGray[2]);
-    doc.text(`Representante: Mario Rivero Bisso`, 196, 30, { align: 'right' });
-    doc.setFont("helvetica", "normal");
-    doc.text(`RUC: ${state.settings?.ruc || 'N/A'}`, 196, 35, { align: 'right' });
-    doc.text(`hola@grupoquantum.ec`, 196, 40, { align: 'right' });
-    doc.text(`+593 99 819 0428`, 196, 45, { align: 'right' });
-    doc.text(`Alborada 14va. - Guayaquil, Ecuador`, 196, 50, { align: 'right' });
+    doc.text(`RUC 1759139270001`, 196, 26, { align: 'right' });
+    doc.text(`Alborada 14, Guayaquil Ecuador`, 196, 32, { align: 'right' });
+    doc.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
+    doc.text(`hola@grupoquantum.uy | grupoquantum.uy`, 196, 38, { align: 'right' });
+    doc.setTextColor(textGray[0], textGray[1], textGray[2]);
+    doc.text(`+593 99 819 0428`, 196, 44, { align: 'right' });
 
     // Separator Line
     doc.setDrawColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
