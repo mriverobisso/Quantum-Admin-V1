@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useGlobalContext } from '../context/GlobalContext';
-import { MdAddShoppingCart, MdPictureAsPdf, MdDeleteOutline, MdAddCircleOutline, MdEdit, MdAssignment, MdViewKanban } from 'react-icons/md';
+import { MdAddShoppingCart, MdPictureAsPdf, MdDeleteOutline, MdAddCircleOutline, MdEdit, MdAssignment, MdViewKanban, MdVisibility } from 'react-icons/md';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import './Cotizador.css';
@@ -8,7 +8,7 @@ import './Cotizador.css';
 const KANBAN_STAGES = ['Enviada', 'Ajustes', 'Cerrada', 'Descartada'];
 
 const Cotizador = () => {
-  const { state, addLog, openFormModal, deleteItem, updateItem, addItem } = useGlobalContext();
+  const { state, setState, addLog, openFormModal, deleteItem, updateItem, addItem, setPreview } = useGlobalContext();
   const [activeTab, setActiveTab] = useState('generator'); // 'generator' or 'kanban'
   
   // Generator State
@@ -248,6 +248,13 @@ const Cotizador = () => {
     addLog(`Actualizó estado de la proforma a: ${newStatus}`);
   };
 
+  const handleDeleteQuote = (quote) => {
+    if (window.confirm(`¿Seguro que deseas eliminar la proforma ${quote.invoiceNumber}?`)) {
+      setState(prev => ({ ...prev, quotes: (prev.quotes || []).filter(q => q.id !== quote.id) }));
+      addLog(`Eliminó proforma ${quote.invoiceNumber}`);
+    }
+  };
+
   return (
     <div className="page-container cotizador-container">
       <header className="page-header module-header">
@@ -415,7 +422,10 @@ const Cotizador = () => {
                     <div key={q.id} className="quote-kanban-card">
                        <div className="qkc-header">
                           <strong>{q.invoiceNumber}</strong>
-                          <button className="icon-btn danger" style={{border: 'none', background: 'none', color: 'var(--status-danger)', cursor: 'pointer', padding: 0}} onClick={() => deleteItem('quotes', q.id)} title="Eliminar"><MdDeleteOutline/></button>
+                          <div style={{ display: 'flex', gap: '0.4rem' }}>
+                            <button className="icon-btn" style={{border: 'none', background: 'none', color: 'var(--primary-color)', cursor: 'pointer', padding: 0}} onClick={() => setPreview('quote', q.id)} title="Ver Detalle"><MdVisibility size={16}/></button>
+                            <button className="icon-btn danger" style={{border: 'none', background: 'none', color: 'var(--status-danger)', cursor: 'pointer', padding: 0}} onClick={() => handleDeleteQuote(q)} title="Eliminar"><MdDeleteOutline size={16}/></button>
+                          </div>
                        </div>
                        <div className="qkc-client">{q.clientName}</div>
                        <div className="qkc-date">{new Date(q.date).toLocaleDateString()}</div>

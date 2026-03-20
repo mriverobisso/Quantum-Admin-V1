@@ -21,6 +21,9 @@ const PreviewModal = () => {
   } else if (type === 'ticket') {
     data = (state.tickets || []).find(tk => tk.id === id);
     title = 'Detalle de Ticket';
+  } else if (type === 'quote') {
+    data = (state.quotes || []).find(q => q.id === id);
+    title = `Detalle de Proforma ${data?.invoiceNumber || ''}`;
   }
 
   const getEditType = () => {
@@ -37,6 +40,7 @@ const PreviewModal = () => {
     if (type === 'client') return 'clients';
     if (type === 'ticket') return 'tickets';
     if (type === 'task') return 'tasks';
+    if (type === 'quote') return 'quotes';
     return null;
   };
 
@@ -228,6 +232,22 @@ const PreviewModal = () => {
                    {data.category && <p><strong>Categoría:</strong> {data.category}</p>}
                  </>
                )}
+               {type === 'quote' && (
+                 <>
+                   <p><strong>Cliente:</strong> {data.clientName}</p>
+                   <p><strong>Fecha Generación:</strong> {new Date(data.date).toLocaleString()}</p>
+                   <p><strong>Estado Actual:</strong> <span className={`badge ${(data.status || '').replace(' ', '-').toLowerCase()}`}>{data.status}</span></p>
+                   <p><strong>Monto Total:</strong> <span style={{color: 'var(--status-ok)', fontWeight: 'bold'}}>${data.total?.toFixed(2)}</span></p>
+                   <h4 style={{ color: 'var(--primary-color)', margin: '1rem 0 0.5rem 0', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.3rem' }}>Módulos Incluidos</h4>
+                   <ul style={{ listStyle: 'none', padding: 0 }}>
+                     {(data.items || []).map((item, idx) => (
+                       <li key={idx} style={{ marginBottom: '0.5rem', backgroundColor: 'var(--bg-color)', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between' }}>
+                         <strong>{item.quantity}x {item.name}</strong> <span>${item.price?.toFixed(2)} c/u</span>
+                       </li>
+                     ))}
+                   </ul>
+                 </>
+               )}
              </div>
           ) : (
             <p className="error-text">Datos no encontrados.</p>
@@ -238,9 +258,11 @@ const PreviewModal = () => {
            <button className="btn-secondary" onClick={closePreview}>Cerrar</button>
            {data && (
              <div style={{ display: 'flex', gap: '0.5rem' }}>
-               <button className="btn-primary" onClick={handleEdit} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                 <MdEdit /> Editar
-               </button>
+               {getEditType() && (
+                 <button className="btn-primary" onClick={handleEdit} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                   <MdEdit /> Editar
+                 </button>
+               )}
                <button className="btn-secondary" onClick={handleDelete} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: 'var(--status-danger)', borderColor: 'var(--status-danger)' }}>
                  <MdDelete /> Eliminar
                </button>

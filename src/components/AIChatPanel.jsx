@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useGlobalContext } from '../context/GlobalContext';
-import { MdClose, MdSend, MdSearch, MdAutoAwesome } from 'react-icons/md';
+import { MdClose, MdSend, MdSearch, MdAutoAwesome, MdAttachFile } from 'react-icons/md';
 import './AIChatPanel.css';
 
 const GEMINI_API_KEY = 'AIzaSyC1WV33g-WfIh99qnH0Ly6XdwuLNIJcd7w';
@@ -101,28 +101,72 @@ const AIChatPanel = ({ isOpen, onClose }) => {
     { role: 'assistant', content: '¡Hola Mario! 👋 Soy **ANTU IA**, tu asistente experto. Estoy al tanto de todo lo que pasa en la plataforma. ¿En qué puedo ayudarte hoy?', time: new Date() }
   ]);
   const [input, setInput] = useState('');
+  const [attachment, setAttachment] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'audio/mp3', 'audio/wav', 'audio/mpeg', 'audio/m4a', 'audio/x-m4a'];
+    if (!validTypes.includes(file.type)) {
+      alert('Formato no soportado. Sube imágenes (JPG, PNG, WEBP) o audios (MP3, WAV, M4A).');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64String = event.target.result.split(',')[1];
+      setAttachment({
+        file,
+        base64: base64String,
+        mimeType: file.type
+      });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = null;
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
   const sendMessage = async (text) => {
-    if (!text.trim() || isLoading) return;
+    if ((!text.trim() && !attachment) || isLoading) return;
     
-    const userMsg = { role: 'user', content: text.trim(), time: new Date() };
+    const uiMsgParts = [];
+    if (text.trim()) uiMsgParts.push(text.trim());
+    if (attachment) uiMsgParts.push(`📎 [Adjunto: ${attachment.file.name}]`);
+
+    const userMsg = { role: 'user', content: uiMsgParts.join('\n'), time: new Date() };
     setMessages(prev => [...prev, userMsg]);
+    
+    const currentAttachment = attachment;
     setInput('');
+    setAttachment(null);
     setIsLoading(true);
 
     try {
-      // Build conversation history for Gemini
-      const history = [...messages, userMsg].map(m => ({
+      // Build conversation history for Gemini (only text from previous messages)
+      const history = messages.map(m => ({
         role: m.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: m.content }]
       }));
+
+      // Current message parts with possible inlineData
+      const currentParts = [{ text: text.trim() || 'Ver archivo adjunto.' }];
+      if (currentAttachment) {
+        currentParts.unshift({
+          inlineData: {
+            mimeType: currentAttachment.mimeType,
+            data: currentAttachment.base64
+          }
+        });
+      }
+      history.push({ role: 'user', parts: currentParts });
 
       const requestBody = {
         system_instruction: {
@@ -260,23 +304,45 @@ const AIChatPanel = ({ isOpen, onClose }) => {
       </div>
 
       {/* Input */}
-      <div className="ai-chat-input">
-        <textarea
-          ref={textareaRef}
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Pregunta a ANTU IA..."
-          rows={1}
-          disabled={isLoading}
-        />
-        <button 
-          className="send-btn" 
-          onClick={() => sendMessage(input)}
-          disabled={!input.trim() || isLoading}
-        >
-          <MdSend />
-        </button>
+      <div className="ai-chat-input-wrapper">
+        {attachment && (
+          <div className="attachment-preview">
+            <span className="attach-name">{attachment.file.name}</span>
+            <button className="remove-attach-btn" onClick={() => setAttachment(null)}><MdClose size={14}/></button>
+          </div>
+        )}
+        <div className="ai-chat-input">
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            style={{ display: 'none' }} 
+            accept="image/png, image/jpeg, image/webp, audio/mp3, audio/mpeg, audio/wav, audio/x-m4a"
+            onChange={handleFileChange}
+          />
+          <button 
+            className="attach-btn" 
+            onClick={() => fileInputRef.current?.click()}
+            title="Adjuntar imagen o audio"
+          >
+            <MdAttachFile size={20} />
+          </button>
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Pregunta a ANTU IA..."
+            rows={1}
+            disabled={isLoading}
+          />
+          <button 
+            className="send-btn" 
+            onClick={() => sendMessage(input)}
+            disabled={(!input.trim() && !attachment) || isLoading}
+          >
+            <MdSend />
+          </button>
+        </div>
       </div>
     </div>
   );
