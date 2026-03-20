@@ -6,7 +6,7 @@ import autoTable from 'jspdf-autotable';
 import { logoBase64 } from '../assets/logoBase64';
 import './Cotizador.css';
 
-const KANBAN_STAGES = ['Enviada', 'Ajustes', 'Cerrada', 'Descartada'];
+const KANBAN_STAGES = ['Enviada', 'Ajustes', 'Aprobadas', 'Cobradas', 'Descartada'];
 
 const Cotizador = () => {
   const { state, setState, addLog, openFormModal, deleteItem, updateItem, addItem, setPreview } = useGlobalContext();

@@ -51,13 +51,14 @@ const Finanzas = () => {
   const monthlyHost = useMemo(() => allHostItems.filter(h => filterByMonth(h.dueDate)), [allHostItems, selectedMonth, selectedYear]);
   
   // Income breakdown
-  const hostRevenue = monthlyHost.reduce((acc, h) => acc + (h.cost || 0), 0);
-  const quotesRevenue = allQuotes.filter(q => filterByMonth(q.date)).reduce((acc, q) => acc + (q.total || 0), 0);
+  const quotesRevenue = allQuotes.filter(q => filterByMonth(q.date) && q.status === 'Cobradas').reduce((acc, q) => acc + (q.total || 0), 0);
+  const pendingQuotesRevenue = allQuotes.filter(q => filterByMonth(q.date) && ['Enviada', 'Ajustes', 'Aprobadas'].includes(q.status)).reduce((acc, q) => acc + (q.total || 0), 0);
   const manualRevenue = monthlyManualIncomes.reduce((acc, i) => acc + (i.amount || 0), 0);
   
   const effectiveQuotesRevenue = quotesRevenue > 0 ? quotesRevenue : 0;
   
-  const totalIncome = hostRevenue + effectiveQuotesRevenue + manualRevenue;
+  // Host revenue is no longer auto-summed to prevent double counting with quotes
+  const totalIncome = effectiveQuotesRevenue + manualRevenue;
   const totalExpense = monthlyExpenses.reduce((acc, e) => acc + (e.amount || 0), 0);
   const balance = totalIncome - totalExpense;
 
@@ -83,10 +84,10 @@ const Finanzas = () => {
       });
       const mQuotes = allQuotes.filter(q => {
         const d = new Date(q.date);
-        return d.getMonth() === m && d.getFullYear() === selectedYear;
+        return d.getMonth() === m && d.getFullYear() === selectedYear && q.status === 'Cobradas';
       });
       
-      const mIncome = mHosts.reduce((a, h) => a + (h.cost || 0), 0) + mQuotes.reduce((a, q) => a + (q.total || 0), 0) + mManualIncTotal;
+      const mIncome = mQuotes.reduce((a, q) => a + (q.total || 0), 0) + mManualIncTotal;
       
       accIncome += mIncome;
       accExpense += mExpensesTotal;
@@ -151,8 +152,7 @@ const Finanzas = () => {
       startY: 56,
       head: [['Concepto', 'Monto']],
       body: [
-        ['Renovaciones de Hosting', `$${hostRevenue.toFixed(2)}`],
-        ['Cotizaciones / Proformas', `$${effectiveQuotesRevenue.toFixed(2)}`],
+        ['Cotizaciones Cobradas', `$${effectiveQuotesRevenue.toFixed(2)}`],
         ['Ingresos Manuales / Otros', `$${manualRevenue.toFixed(2)}`],
         ['', ''],
         ['TOTAL INGRESOS', `$${totalIncome.toFixed(2)}`],
@@ -314,6 +314,17 @@ const Finanzas = () => {
           </div>
         </div>
       </div>
+      
+      {/* Pending Pipeline Banner */}
+      <div style={{ backgroundColor: 'rgba(255, 165, 0, 0.1)', border: '1px solid rgba(255, 165, 0, 0.3)', borderRadius: '8px', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <div>
+          <h3 style={{ margin: 0, color: '#d97706', fontSize: '1.1rem' }}>Cotizaciones Pendientes de Cierre (Pipeline)</h3>
+          <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Monto total en negociación o espera de pago este mes.</p>
+        </div>
+        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#d97706' }}>
+          ${pendingQuotesRevenue.toFixed(2)}
+        </div>
+      </div>
 
       {/* Tabs */}
       <div style={{ backgroundColor: 'transparent', border: 'none', padding: 0 }}>
@@ -391,31 +402,17 @@ const Finanzas = () => {
         {/* ── TAB: INGRESOS ── */}
         {tab === 'ingresos' && (
           <div className="grid-module-layout" style={{ marginTop: 0 }}>
+         {/* Removed Auto-Host Revenue to prevent double counting */}
+         {/* 
              <div className="module-card">
-                 <div className="module-card-body">
-                    <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><MdReceipt /> Hosting & Dominios</h3>
-                    <p className="card-detail">Ingresos por renovaciones de hosting en {MONTHS_ES[selectedMonth]}.</p>
-                    <div style={{ marginTop: '0.75rem', fontSize: '0.85rem' }}>
-                      {monthlyHost.length > 0 ? monthlyHost.map(h => {
-                        const client = allClients.find(c => c.id === h.clientId);
-                        return (
-                          <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.3rem 0', borderBottom: '1px dashed var(--border-color)' }}>
-                            <span>{h.domain} ({client?.name || 'N/A'})</span>
-                            <span style={{ color: 'var(--status-ok)', fontWeight: 600 }}>${(h.cost || 0).toFixed(2)}</span>
-                          </div>
-                        );
-                      }) : <p style={{ color: 'var(--text-muted)' }}>Sin renovaciones este mes.</p>}
-                    </div>
-                    <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-                       <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--status-ok)' }}>${hostRevenue.toFixed(2)}</span>
-                    </div>
-                 </div>
+              ...
              </div>
+         */}
              
              <div className="module-card">
                  <div className="module-card-body">
-                    <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><MdReceipt /> Cotizaciones</h3>
-                    <p className="card-detail">Proformas facturadas en {MONTHS_ES[selectedMonth]}.</p>
+                    <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><MdReceipt /> Cotizaciones Cobradas</h3>
+                    <p className="card-detail">Proformas marcadas como 'Cobradas' en {MONTHS_ES[selectedMonth]}.</p>
                     <div style={{ marginTop: 'auto', paddingTop: '1.5rem' }}>
                        <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--status-ok)' }}>${effectiveQuotesRevenue.toFixed(2)}</span>
                     </div>
@@ -486,11 +483,7 @@ const Finanzas = () => {
               <h4 style={{ color: 'var(--status-ok)', borderBottom: '2px solid var(--status-ok)', paddingBottom: '0.3rem', marginBottom: '0.8rem' }}>INGRESOS</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', paddingLeft: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem' }}>
-                  <span>Renovaciones de Hosting</span>
-                  <span style={{ fontWeight: 600 }}>${hostRevenue.toFixed(2)}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem' }}>
-                  <span>Cotizaciones / Proformas</span>
+                  <span>Cotizaciones Cobradas</span>
                   <span style={{ fontWeight: 600 }}>${effectiveQuotesRevenue.toFixed(2)}</span>
                 </div>
                 {monthlyManualIncomes.map(i => (
