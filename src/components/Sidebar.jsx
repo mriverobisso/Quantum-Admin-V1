@@ -13,7 +13,8 @@ import {
   MdMenu,
   MdSupportAgent,
   MdGroup,
-  MdCalendarToday
+  MdCalendarToday,
+  MdAutoAwesome
 } from 'react-icons/md';
 import './Sidebar.css';
 
@@ -31,6 +32,7 @@ const NAV_ITEMS = [
   { to: '/cotizador', icon: MdAttachMoney, label: 'Cotizador', module: 'cotizador', iconClass: 'brand-crm' },
   { to: '/finances', icon: MdAttachMoney, label: 'Finanzas', module: 'finanzas', iconClass: 'brand-finance' },
   { divider: true },
+  { to: '/antu', icon: MdAutoAwesome, label: 'ANTU IA', module: 'antu', adminOnly: true },
   { to: '/usuarios', icon: MdGroup, label: 'Usuarios', module: 'usuarios', adminOnly: true },
   { to: '/admin', icon: MdAdminPanelSettings, label: 'Administración', module: 'admin' },
   { to: '/settings', icon: MdSettings, label: 'Configuración', module: 'config' },

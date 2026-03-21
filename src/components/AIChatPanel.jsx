@@ -103,7 +103,7 @@ const parseMessage = (text) => {
     .replace(/\n/g, '<br/>');
 };
 
-const AIChatPanel = ({ isOpen, onClose }) => {
+const AIChatPanel = ({ isOpen, onClose, isFullScreen = false }) => {
   const { state } = useGlobalContext();
   const [messages, setMessages] = useState([
     { role: 'assistant', content: '¡Hola Mario! 👋 Soy **ANTU IA**, tu asistente experto. Estoy al tanto de todo lo que pasa en la plataforma. ¿En qué puedo ayudarte hoy?', time: new Date() }
@@ -249,19 +249,23 @@ const AIChatPanel = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className={`ai-chat-panel ${isOpen ? 'open' : ''}`}>
-      <div className="ai-chat-header">
-        <div className="ai-brand">
-          <div className="ai-logo">⚡</div>
-          <div>
-            <h3>ANTU IA</h3>
-            <span className="ai-status">● Gemini Flash · En línea</span>
+    <>
+      {!isFullScreen && <div className={`ai-backdrop ${isOpen ? 'open' : ''}`} onClick={onClose} />}
+      <div className={`ai-chat-panel ${isOpen ? 'open' : ''} ${isFullScreen ? 'fullscreen' : ''}`}>
+        <div className="ai-chat-header">
+          <div className="ai-brand">
+            <div className="ai-logo">⚡</div>
+            <div>
+              <h3>ANTU IA</h3>
+              <span className="ai-status">● Gemini Flash · En línea</span>
+            </div>
           </div>
+          {!isFullScreen && (
+            <button className="close-chat-btn" onClick={onClose}>
+              <MdClose />
+            </button>
+          )}
         </div>
-        <button className="close-chat-btn" onClick={onClose}>
-          <MdClose />
-        </button>
-      </div>
 
       {/* Quick Actions */}
       <div className="ai-quick-actions">
@@ -356,7 +360,8 @@ const AIChatPanel = ({ isOpen, onClose }) => {
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
