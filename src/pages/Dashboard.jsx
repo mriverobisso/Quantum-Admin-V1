@@ -16,8 +16,8 @@ const getSemaphoreColor = (dueDate) => {
 };
 
 const Dashboard = () => {
-  const { state, setPreview } = useGlobalContext();
-  const { clients, tasks, hostItems, tickets, finances, quotes, currentUser } = state;
+  const { state, setPreview, openFormModal } = useGlobalContext();
+  const { clients, tasks, hostItems, tickets, finances, quotes, meetings = [], currentUser } = state;
   const navigate = useNavigate();
 
   // Calculo KPIs
@@ -40,6 +40,22 @@ const Dashboard = () => {
      const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
      return diffDays >= 0 && diffDays <= 7;
   });
+
+  // Reuniones de la semana (próximos 7 días)
+  const weekMeetings = meetings.filter(m => {
+     if (!m.date) return false;
+     
+     // Filtrado de seguridad/privacidad
+     const isAdmin = currentUser?.role === 'Administrador';
+     if (!isAdmin && m.visibility === 'private' && m.organizerId !== currentUser?.id) {
+       return false;
+     }
+
+     const now = new Date();
+     const meetingDate = new Date(`${m.date}T${m.startTime || '00:00'}`);
+     const diffDays = Math.ceil((meetingDate - now) / (1000 * 60 * 60 * 24));
+     return diffDays >= 0 && diffDays <= 7;
+  }).sort((a, b) => new Date(`${a.date}T${a.startTime}`) - new Date(`${b.date}T${b.startTime}`));
 
   // Alertas (Cumpleaños < 7 días, Renovaciones de Host < 30 días)
   const alerts = [];
@@ -128,6 +144,30 @@ const Dashboard = () => {
                ))}
                {weekTasks.length === 0 && (
                  <div className="empty-state">No hay tareas pendientes en los próximos 7 días.</div>
+               )}
+            </div>
+          </div>
+          
+          <div className="card section-card">
+            <div className="section-header">
+              <h2>Reuniones Programadas de la Semana ({weekMeetings.length})</h2>
+            </div>
+            <div className="task-list">
+               {weekMeetings.map(m => (
+                  <div key={m.id} className="task-item clickable" onClick={() => openFormModal('edit_meeting', m)} style={{ borderLeftColor: m.visibility === 'private' ? '#8b5cf6' : 'var(--primary-color)' }}>
+                    <div className="task-info">
+                      <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                         <span className="badge" style={{ backgroundColor: m.visibility === 'private' ? '#8b5cf6' : 'var(--primary-color)' }}>{m.visibility === 'private' ? 'Privado' : 'General'}</span> 
+                         {m.title}
+                      </h4>
+                      <span className="task-meta" style={{ marginTop: '0.4rem', display: 'block' }}>
+                        📅 {new Date(`${m.date}T${m.startTime}`).toLocaleDateString()} ⏰ {m.startTime} - {m.endTime}
+                      </span>
+                    </div>
+                  </div>
+               ))}
+               {weekMeetings.length === 0 && (
+                 <div className="empty-state">No tienes reuniones programadas en los próximos 7 días.</div>
                )}
             </div>
           </div>

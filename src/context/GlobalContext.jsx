@@ -44,6 +44,10 @@ const initialMockState = {
   tickets: [
     { id: 'tk1', clientId: 'c2', detail: 'Caída de servidor', reportDate: '2026-03-16T09:00:00', status: 'abierto' }
   ],
+  meetings: [
+    { id: 'm1', title: 'Reunión Comercial Q2', date: '2026-03-24', startTime: '10:00', endTime: '11:00', visibility: 'public', organizerId: 'u_admin' },
+    { id: 'm2', title: 'Revisión Estratégica', date: '2026-03-25', startTime: '15:00', endTime: '16:30', visibility: 'private', organizerId: 'u_admin' }
+  ],
   quotes: [],
   finances: [],
   catalog: [],
@@ -51,7 +55,7 @@ const initialMockState = {
 };
 
 // We no longer use a single macro-document, instead we sync individual collections
-const COLLECTIONS = ['clients', 'tasks', 'hostItems', 'tickets', 'quotes', 'finances', 'catalog', 'logs', 'users'];
+const COLLECTIONS = ['clients', 'tasks', 'hostItems', 'tickets', 'meetings', 'quotes', 'finances', 'catalog', 'logs', 'users'];
 
 export const GlobalProvider = ({ children }) => {
   const [state, setState] = useState(() => {

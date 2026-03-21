@@ -12,7 +12,8 @@ import {
   MdLogout,
   MdMenu,
   MdSupportAgent,
-  MdGroup
+  MdGroup,
+  MdCalendarToday
 } from 'react-icons/md';
 import './Sidebar.css';
 
@@ -26,6 +27,7 @@ const NAV_ITEMS = [
   { to: '/support', icon: MdSupportAgent, label: 'Soporte', module: 'soporte', iconClass: 'brand-support' },
   { section: 'COMERCIAL' },
   { to: '/crm', icon: MdPeople, label: 'CRM', module: 'crm', iconClass: 'brand-crm' },
+  { to: '/agenda', icon: MdCalendarToday, label: 'Agenda', module: 'crm', iconClass: 'brand-crm' },
   { to: '/cotizador', icon: MdAttachMoney, label: 'Cotizador', module: 'cotizador', iconClass: 'brand-crm' },
   { to: '/finances', icon: MdAttachMoney, label: 'Finanzas', module: 'finanzas', iconClass: 'brand-finance' },
   { divider: true },

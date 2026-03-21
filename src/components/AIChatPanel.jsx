@@ -9,6 +9,7 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemi
 
 const QUICK_ACTIONS = [
   { label: '☀️ Briefing del día', prompt: 'Dame un briefing completo del día de hoy. Revisa mis tareas pendientes, tickets abiertos, dominios por vencer, y recomiéndame las mejores acciones a tomar priorizando lo más urgente.' },
+  { label: '📅 Agenda Semanal', prompt: 'Genera un reporte de mi agenda semanal incluyendo las próximas reuniones comerciales y las tareas de diseño/rrss pendientes de entrega para esta semana.' },
   { label: '🌐 Estado Hosting', prompt: 'Analiza el estado de mis dominios y servicios de hosting. ¿Hay algo que venza pronto? ¿Qué acciones recomendas?' },
   { label: '📱 Plan RRSS', prompt: 'Basándote en mis posts programados y clientes, sugiere un plan de contenido para redes sociales esta semana.' },
   { label: '💰 Análisis Financiero', prompt: 'Analiza mis finanzas: ingresos vs egresos, balance, y dame recomendaciones para mejorar la rentabilidad.' },
@@ -33,6 +34,9 @@ const buildSystemPrompt = (state) => {
     const client = (state.clients || []).find(c => c.id === tk.clientId);
     return `• [${tk.status.toUpperCase()}] ${tk.detail} — Cliente: ${client?.name || 'N/A'} — Reportado: ${tk.reportDate}`;
   }).join('\n');
+  const meetings = (state.meetings || []).map(m => {
+    return `• [${m.visibility.toUpperCase()}] ${m.title} — Fecha: ${m.date} — Hora: ${m.startTime} a ${m.endTime}`;
+  }).join('\n');
   const finances = (state.finances || []).map(f => `• ${f.desc} — $${f.amount} (${f.category || 'General'}) — ${f.date}`).join('\n');
   const totalIncome = (state.hostItems || []).reduce((a, h) => a + (h.cost || 0), 0) + (state.quotes || []).reduce((a, q) => a + (q.total || 0), 0);
   const totalExpense = (state.finances || []).reduce((a, f) => a + (f.amount || 0), 0);
@@ -55,6 +59,9 @@ ${clients || '(Sin clientes registrados)'}
 
 📌 TAREAS ACTIVAS (${(state.tasks || []).length}):
 ${tasks || '(Sin tareas)'}
+
+🗓️ REUNIONES PROGRAMADAS (${(state.meetings || []).length}):
+${meetings || '(Sin reuniones)'}
 
 🌐 HOSTING & DOMINIOS (${(state.hostItems || []).length}):
 ${hosts || '(Sin dominios)'}

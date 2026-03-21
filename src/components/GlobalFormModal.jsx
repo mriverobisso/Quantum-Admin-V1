@@ -181,6 +181,24 @@ const GlobalFormModal = () => {
         addItem('catalog', itemData);
         addLog(`Catálogo actualizado: Agregó opción ${itemData.name}`);
       }
+    } else if (modal.type === 'new_meeting' || modal.type === 'edit_meeting') {
+      const meetingData = {
+        title: formVals.title,
+        date: formVals.date,
+        startTime: formVals.startTime,
+        endTime: formVals.endTime,
+        visibility: formVals.visibility,
+        type: 'meeting',
+        organizerId: state.currentUser.id
+      };
+      
+      if (modal.type === 'edit_meeting') {
+        updateItem('meetings', formData.id, meetingData);
+        addLog(`Editó cita comercial: ${meetingData.title}`);
+      } else {
+        addItem('meetings', meetingData);
+        addLog(`Programó nueva cita comercial: ${meetingData.title}`);
+      }
     }
 
     handleClose();
@@ -483,6 +501,39 @@ const GlobalFormModal = () => {
         <div className="form-group">
           <label>Precio Unitario Base ($)</label>
           <input type="number" name="price" className="input-field" defaultValue={formData.price} step="0.01" min="0" required />
+        </div>
+      </>
+    );
+  } else if (modal.type === 'new_meeting' || modal.type === 'edit_meeting') {
+    title = modal.type === 'new_meeting' ? 'Agendar Nueva Cita' : 'Editar Cita';
+    content = (
+      <>
+        <div className="form-group">
+          <label>Título de la Reunión</label>
+          <input type="text" name="title" className="input-field" defaultValue={formData.title} placeholder="Ej: Demo Producto con Cliente X" required />
+        </div>
+        <div className="form-group" style={{ display: 'flex', gap: '1rem' }}>
+          <div style={{ flex: 1 }}>
+            <label>Fecha</label>
+            <input type="date" name="date" className="input-field" defaultValue={formData.date || new Date().toISOString().split('T')[0]} required />
+          </div>
+        </div>
+        <div className="form-group" style={{ display: 'flex', gap: '1rem' }}>
+          <div style={{ flex: 1 }}>
+            <label>Hora de Inicio</label>
+            <input type="time" name="startTime" className="input-field" defaultValue={formData.startTime} required />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label>Hora de Fin</label>
+            <input type="time" name="endTime" className="input-field" defaultValue={formData.endTime} required />
+          </div>
+        </div>
+        <div className="form-group">
+          <label>Visibilidad (Privacidad)</label>
+          <select name="visibility" className="input-field" defaultValue={formData.visibility || 'public'}>
+            <option value="public">Público (Visible para todo el equipo)</option>
+            <option value="private">Privado (Solo Administradores y creador)</option>
+          </select>
         </div>
       </>
     );

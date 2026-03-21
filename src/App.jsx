@@ -10,6 +10,7 @@ import Design from './pages/Design';
 import Host from './pages/Host';
 import Soporte from './pages/Soporte';
 import CRM from './pages/CRM';
+import AgendaComercial from './pages/AgendaComercial';
 import Cotizador from './pages/Cotizador';
 import Finanzas from './pages/Finanzas';
 import AdminConfig from './pages/AdminConfig';
@@ -35,6 +36,7 @@ function App() {
             
             {/* Comercial & Finanzas */}
             <Route path="crm" element={<CRM />} />
+            <Route path="agenda" element={<AgendaComercial />} />
             <Route path="cotizador" element={<Cotizador />} />
             <Route path="finances" element={<Finanzas />} />
             
