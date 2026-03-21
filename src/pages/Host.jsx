@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useGlobalContext } from '../context/GlobalContext';
-import { MdAdd, MdEmail, MdWarning, MdPublic, MdEdit, MdDelete } from 'react-icons/md';
+import { MdAdd, MdEmail, MdWarning, MdPublic, MdEdit, MdDelete, MdSync } from 'react-icons/md';
 import './GridModules.css';
 
 const getHostSemaphore = (dueDate) => {
@@ -15,6 +15,25 @@ const Host = () => {
   const { state, setState, addLog, openFormModal, deleteItem } = useGlobalContext();
   const { hostItems, clients } = state;
   const [showMockToast, setShowMockToast] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [serverAccounts, setServerAccounts] = useState(null);
+
+  const handleSyncWHM = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await fetch('/api/whm');
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      
+      const accts = data?.data?.acct || [];
+      setServerAccounts(accts);
+      addLog(`Se sincronizaron ${accts.length} cuentas desde WHM.`);
+    } catch (err) {
+      alert(`Error de sincronización WHM:\n${err.message}\n\nNota: Los endpoints /api/ funcionan en Vercel Producción o usando 'vercel dev' de manera local.`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const handleSendEmail = (hostId, domain) => {
     setState(prev => {
@@ -30,12 +49,25 @@ const Host = () => {
 
   return (
     <div className="page-container host-container">
-      <header className="page-header module-header">
+      <header className="page-header module-header" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1>Gestión de Hosting</h1>
-          <p className="subtitle">Inventario y control de dominios</p>
+          <p className="subtitle">Inventario en plataforma y Cuentas CPanel en vivo</p>
         </div>
-        <button className="btn-primary" onClick={() => openFormModal('new_host')}><MdAdd /> Registro de Host</button>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+          <button 
+             className="btn-secondary" 
+             onClick={handleSyncWHM}
+             disabled={isSyncing}
+             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: isSyncing ? 'rgba(0,0,0,0.05)' : 'transparent' }}
+          >
+             <MdSync className={isSyncing ? 'spin-icon' : ''} /> 
+             {isSyncing ? 'Sincronizando...' : 'Conectar WHM en vivo'}
+          </button>
+          <button className="btn-primary" onClick={() => openFormModal('new_host')}>
+             <MdAdd /> Registro Plataforma
+          </button>
+        </div>
       </header>
 
       {showMockToast && (
@@ -104,6 +136,55 @@ const Host = () => {
            <div className="empty-grid-state">El inventario de Hosts está vacío. Agregue el registro del primer dominio.</div>
          )}
       </div>
+
+      {serverAccounts && (
+        <div style={{ marginTop: '2rem', padding: '1.5rem', backgroundColor: 'var(--surface-color)', borderRadius: '12px', border: '1px solid var(--border-color)', animation: 'msgFadeIn 0.4s ease' }}>
+          <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+             <MdPublic style={{ color: 'var(--primary-color)' }} /> 
+             Directorio de Cuentas Reales (Servidor) - {serverAccounts.length} cuentas
+          </h2>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+               <thead>
+                 <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-muted)' }}>
+                   <th style={{ padding: '0.75rem 0.5rem' }}>Dominio</th>
+                   <th style={{ padding: '0.75rem 0.5rem' }}>Usuario CPanel</th>
+                   <th style={{ padding: '0.75rem 0.5rem' }}>Plan (Paquete)</th>
+                   <th style={{ padding: '0.75rem 0.5rem' }}>Disco Usado</th>
+                   <th style={{ padding: '0.75rem 0.5rem' }}>Cuota Disco</th>
+                   <th style={{ padding: '0.75rem 0.5rem' }}>IP / Servidor</th>
+                   <th style={{ padding: '0.75rem 0.5rem' }}>Estado Servidor</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 {serverAccounts.map((acct, idx) => {
+                   const isWarning = acct.diskused !== 'unlimited' && acct.disklimit && parseFloat(acct.diskused) / parseFloat(acct.disklimit) > 0.8;
+                   
+                   return (
+                     <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: acct.suspended ? 'rgba(220,53,69,0.05)' : 'transparent' }}>
+                       <td style={{ padding: '0.75rem 0.5rem', fontWeight: 600, color: 'var(--text-main)' }}>{acct.domain}</td>
+                       <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-muted)' }}>{acct.user}</td>
+                       <td style={{ padding: '0.75rem 0.5rem' }}>{acct.plan}</td>
+                       <td style={{ padding: '0.75rem 0.5rem', color: isWarning ? 'var(--status-warning)' : 'inherit', fontWeight: isWarning ? 700 : 400 }}>
+                         {acct.diskused}
+                       </td>
+                       <td style={{ padding: '0.75rem 0.5rem' }}>{acct.disklimit}</td>
+                       <td style={{ padding: '0.75rem 0.5rem', fontFamily: 'monospace' }}>{acct.ip}</td>
+                       <td style={{ padding: '0.75rem 0.5rem' }}>
+                         {acct.suspended ? (
+                           <span style={{ color: 'var(--status-danger)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.2rem' }}><MdWarning/> Suspendida</span>
+                         ) : (
+                           <span style={{ color: 'var(--status-ok)', fontWeight: 600 }}>Activa</span>
+                         )}
+                       </td>
+                     </tr>
+                   );
+                 })}
+               </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
