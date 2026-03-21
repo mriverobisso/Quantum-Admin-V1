@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useGlobalContext } from '../context/GlobalContext';
 import { 
@@ -39,9 +39,19 @@ const NAV_ITEMS = [
 const Sidebar = ({ isCollapsed, toggleSidebar, isMobileOpen }) => {
   const navigate = useNavigate();
   const { state } = useGlobalContext();
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const currentUser = state.currentUser || {};
   const userPermissions = currentUser.permissions || {};
   const isAdmin = currentUser.role === 'Administrador';
+  
+  const effectiveCollapsed = isCollapsed && !isMobile;
 
   const handleLogout = () => {
     window.location.href = '/login';
@@ -61,7 +71,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, isMobileOpen }) => {
     <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''}`}>
       <div className="sidebar-header">
         <div className="sidebar-brand">
-          {isCollapsed ? (
+          {effectiveCollapsed ? (
             <img src="/icon.svg" alt="Q" className="icon-logo" />
           ) : (
             <img src="/logo.svg" alt="Quantum" className="main-logo" />
@@ -75,7 +85,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, isMobileOpen }) => {
       <nav className="sidebar-nav">
         {NAV_ITEMS.map((item, idx) => {
           if (item.section) {
-            if (isCollapsed) return null;
+            if (effectiveCollapsed) return null;
             return <div key={idx} className="nav-section">{item.section}</div>;
           }
           if (item.divider) {
@@ -93,13 +103,13 @@ const Sidebar = ({ isCollapsed, toggleSidebar, isMobileOpen }) => {
               title={item.label}
             >
               <Icon className={`nav-icon ${item.iconClass || ''}`} style={item.iconStyle} /> 
-              {!isCollapsed && <span>{item.label}</span>}
+              {!effectiveCollapsed && <span>{item.label}</span>}
             </NavLink>
           );
         })}
 
         <button className="nav-item logout-btn" onClick={handleLogout} title="Cerrar Sesión">
-          <MdLogout className="nav-icon" /> {!isCollapsed && <span>Cerrar Sesión</span>}
+          <MdLogout className="nav-icon" /> {!effectiveCollapsed && <span>Cerrar Sesión</span>}
         </button>
       </nav>
     </aside>
