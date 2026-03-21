@@ -57,6 +57,23 @@
 
 .nav-item {
   display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  transition: all 0.2s;
+  border: none;
+  background: none;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
 
 .main-logo {
   height: 38px;
@@ -79,23 +96,6 @@
 body.dark-mode .main-logo,
 body.dark-mode .icon-logo {
   filter: invert(0.8) brightness(1.2) grayscale(100%);
-}
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  border-radius: 8px;
-  color: var(--text-muted);
-  text-decoration: none;
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  transition: all 0.2s;
-  border: none;
-  background: none;
-  width: 100%;
-  cursor: pointer;
-  text-align: left;
-  white-space: nowrap;
 }
 
 .sidebar.collapsed .nav-item {
