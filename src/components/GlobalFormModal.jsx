@@ -188,6 +188,7 @@ const GlobalFormModal = () => {
         startTime: formVals.startTime,
         endTime: formVals.endTime,
         visibility: formVals.visibility,
+        guestEmail: formVals.guestEmail || '',
         type: 'meeting',
         organizerId: state.currentUser.id
       };
@@ -529,12 +530,44 @@ const GlobalFormModal = () => {
           </div>
         </div>
         <div className="form-group">
+          <label>Email del Invitado / Cliente (Para enlace Meet)</label>
+          <input type="email" name="guestEmail" className="input-field" defaultValue={formData.guestEmail} placeholder="ejemplo@cliente.com" />
+        </div>
+        <div className="form-group">
           <label>Visibilidad (Privacidad)</label>
           <select name="visibility" className="input-field" defaultValue={formData.visibility || 'public'}>
             <option value="public">Público (Visible para todo el equipo)</option>
             <option value="private">Privado (Solo Administradores y creador)</option>
           </select>
         </div>
+        {modal.type === 'edit_meeting' && (
+           <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: 'rgba(37,117,252,0.05)', borderRadius: '8px', border: '1px solid rgba(37,117,252,0.2)' }}>
+              <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--primary-color)' }}>Sincronización con Google</h4>
+              <p style={{ margin: '0 0 0.8rem 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Crea el evento en tu calendario para añadir la sala de Meet y enviar la invitación.</p>
+              <a 
+                href={(() => {
+                  const d = formData.date ? formData.date.replace(/-/g, '') : '';
+                  const st = formData.startTime ? formData.startTime.replace(':', '') + '00' : '000000';
+                  const et = formData.endTime ? formData.endTime.replace(':', '') + '00' : '010000';
+                  const dates = `${d}T${st}/${d}T${et}`;
+                  
+                  const url = new URL('https://calendar.google.com/calendar/r/eventedit');
+                  url.searchParams.append('text', formData.title || 'Reunión Comercial');
+                  url.searchParams.append('dates', dates);
+                  if (formData.guestEmail) url.searchParams.append('add', formData.guestEmail);
+                  url.searchParams.append('details', 'Reunión agendada vía Quantum OS.');
+                  
+                  return url.toString();
+                })()}
+                target="_blank" 
+                rel="noreferrer"
+                className="btn-primary"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', backgroundColor: '#4285F4', color: 'white', border: 'none' }}
+              >
+                📅 Agendar y Enviar Meet (Google Calendar)
+              </a>
+           </div>
+        )}
       </>
     );
   }
