@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useGlobalContext } from '../context/GlobalContext';
-import { MdAdd, MdUploadFile, MdEdit, MdDelete } from 'react-icons/md';
+import { MdAdd, MdUploadFile, MdEdit, MdDelete, MdCheckCircle } from 'react-icons/md';
+import { storage } from '../firebase';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import './RRSS.css'; // Mismas reglas de Kanban
 
 const getDesignSemaphore = (dueDate, status) => {
@@ -17,8 +19,9 @@ const getDesignSemaphore = (dueDate, status) => {
 };
 
 const Design = () => {
-  const { state, setState, setPreview, openFormModal, addLog, deleteItem } = useGlobalContext();
+  const { state, setState, setPreview, openFormModal, addLog, deleteItem, updateItem } = useGlobalContext();
   const { tasks, clients } = state;
+  const [uploadingTask, setUploadingTask] = useState(null);
 
   const designTasks = tasks.filter(t => t.module === 'Design');
 
@@ -41,16 +44,51 @@ const Design = () => {
     });
   };
 
-  // Simulated drag&drop upload for graphic assets to mark as done
-  const handleSimulateUpload = (e, taskId, eEvent) => {
-     eEvent.stopPropagation(); // Prevent preview trigger
-     setState(prev => {
-        const newItems = prev.tasks.map(t => 
-           t.id === taskId ? { ...t, status: 'terminado', assets: 'Arte_Aprobado.png' } : t
-        );
-        return { ...prev, tasks: newItems };
-     });
-     addLog(`Arte final subido para pieza gráfica #${taskId}`);
+  // Real Firebase Storage upload
+  const handleUploadClick = (e, taskId) => {
+     e.stopPropagation();
+     if (uploadingTask) return; // Prevent multiple uploads at same time
+     
+     const input = document.createElement('input');
+     input.type = 'file';
+     input.accept = 'image/*,.pdf,.zip,.psd,.ai,.mp4';
+     input.onchange = async (evt) => {
+        const file = evt.target.files[0];
+        if (!file) return;
+
+        setUploadingTask(taskId);
+        try {
+           const storageRef = ref(storage, `design_arts/${taskId}/${file.name}`);
+           const uploadTask = uploadBytesResumable(storageRef, file);
+
+           uploadTask.on('state_changed', 
+              (snapshot) => {
+                 // You could track progress here if needed
+              }, 
+              (error) => {
+                 console.error("Upload error", error);
+                 setUploadingTask(null);
+              }, 
+              async () => {
+                 const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                 
+                 // Guardar en Firestore y mover a terminado
+                 await updateItem('tasks', taskId, {
+                    status: 'terminado',
+                    assets: file.name,
+                    assetsUrl: downloadURL
+                 });
+                 
+                 addLog(`Arte final subido para pieza gráfica #${taskId}: ${file.name}`);
+                 setUploadingTask(null);
+              }
+           );
+        } catch (err) {
+           console.error('Error during upload init', err);
+           setUploadingTask(null);
+        }
+     };
+     input.click();
   };
 
   return (
@@ -99,18 +137,34 @@ const Design = () => {
                           <button className="icon-btn danger" style={{ padding: '0.3rem' }} title="Eliminar" onClick={(e) => { e.stopPropagation(); deleteItem('tasks', t.id); }}><MdDelete size={16} /></button>
                        </div>
                        
-                       {col !== 'terminado' && (
+                       {col !== 'terminado' && !t.assetsUrl && (
                          <div className="mt-2 text-center">
                             <button 
                               className="btn-secondary" 
-                              style={{ width: '100%', fontSize: '0.8rem', padding: '0.4rem', borderStyle: 'dashed' }}
-                              onClick={(e) => handleSimulateUpload(null, t.id, e)}
+                              style={{ width: '100%', fontSize: '0.8rem', padding: '0.4rem', borderStyle: 'dashed', opacity: uploadingTask === t.id ? 0.6 : 1, cursor: uploadingTask === t.id ? 'not-allowed' : 'pointer' }}
+                              onClick={(e) => handleUploadClick(e, t.id)}
                             >
-                              <MdUploadFile /> Subir Arte / Mockup
+                              {uploadingTask === t.id ? 'Subiendo...' : <><MdUploadFile /> Subir Arte / Mockup</>}
                             </button>
                          </div>
                        )}
-                       {t.assets && <p className="mt-2 code-text" style={{ fontSize: '0.75rem' }}>✅ {t.assets}</p>}
+                       {t.assetsUrl ? (
+                         <div className="mt-2 text-center">
+                           <a 
+                             href={t.assetsUrl} 
+                             target="_blank" 
+                             rel="noopener noreferrer" 
+                             className="btn-secondary"
+                             onClick={(e) => e.stopPropagation()}
+                             style={{ display: 'block', width: '100%', fontSize: '0.8rem', padding: '0.4rem', background: 'rgba(0,160,153,0.1)', color: 'var(--brand-primary)', borderColor: 'var(--brand-primary)', textDecoration: 'none', borderRadius: '4px' }}
+                           >
+                              <MdCheckCircle style={{ verticalAlign: 'middle', marginRight: '4px' }} /> Ver / Descargar Arte
+                           </a>
+                           <p className="mt-2 code-text" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{t.assets}</p>
+                         </div>
+                       ) : (
+                         t.assets && <p className="mt-2 code-text" style={{ fontSize: '0.75rem' }}>✅ {t.assets}</p>
+                       )}
                      </div>
                    );
                 })}
