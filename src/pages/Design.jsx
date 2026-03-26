@@ -44,51 +44,44 @@ const Design = () => {
     });
   };
 
-  // Real Firebase Storage upload
-  const handleUploadClick = (e, taskId) => {
-     e.stopPropagation();
-     if (uploadingTask) return; // Prevent multiple uploads at same time
+  const handleFileChange = async (evt, taskId) => {
+     const file = evt.target.files[0];
+     if (!file) return;
+
+     setUploadingTask(taskId);
+     try {
+        const storageRef = ref(storage, `design_arts/${taskId}/${file.name}`);
+        const uploadTask = uploadBytesResumable(storageRef, file);
+
+        uploadTask.on('state_changed', 
+           (snapshot) => {
+              // Tracking progress
+           }, 
+           (error) => {
+              console.error("Upload error", error);
+              setUploadingTask(null);
+           }, 
+           async () => {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              
+              // Guardar en Firestore y mover a terminado
+              await updateItem('tasks', taskId, {
+                 status: 'terminado',
+                 assets: file.name,
+                 assetsUrl: downloadURL
+              });
+              
+              addLog(`Arte final subido para pieza gráfica #${taskId}: ${file.name}`);
+              setUploadingTask(null);
+           }
+        );
+     } catch (err) {
+        console.error('Error during upload init', err);
+        setUploadingTask(null);
+     }
      
-     const input = document.createElement('input');
-     input.type = 'file';
-     input.accept = 'image/*,.pdf,.zip,.psd,.ai,.mp4';
-     input.onchange = async (evt) => {
-        const file = evt.target.files[0];
-        if (!file) return;
-
-        setUploadingTask(taskId);
-        try {
-           const storageRef = ref(storage, `design_arts/${taskId}/${file.name}`);
-           const uploadTask = uploadBytesResumable(storageRef, file);
-
-           uploadTask.on('state_changed', 
-              (snapshot) => {
-                 // You could track progress here if needed
-              }, 
-              (error) => {
-                 console.error("Upload error", error);
-                 setUploadingTask(null);
-              }, 
-              async () => {
-                 const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                 
-                 // Guardar en Firestore y mover a terminado
-                 await updateItem('tasks', taskId, {
-                    status: 'terminado',
-                    assets: file.name,
-                    assetsUrl: downloadURL
-                 });
-                 
-                 addLog(`Arte final subido para pieza gráfica #${taskId}: ${file.name}`);
-                 setUploadingTask(null);
-              }
-           );
-        } catch (err) {
-           console.error('Error during upload init', err);
-           setUploadingTask(null);
-        }
-     };
-     input.click();
+     // Reset input value to allow uploading same file again if it failed
+     evt.target.value = '';
   };
 
   return (
@@ -139,10 +132,21 @@ const Design = () => {
                        
                        {col !== 'terminado' && !t.assetsUrl && (
                          <div className="mt-2 text-center">
+                            <input 
+                              type="file" 
+                              id={`file-${t.id}`}
+                              style={{ display: 'none' }}
+                              accept="image/*,.pdf,.zip,.psd,.ai,.mp4"
+                              onChange={(e) => handleFileChange(e, t.id)}
+                            />
                             <button 
                               className="btn-secondary" 
                               style={{ width: '100%', fontSize: '0.8rem', padding: '0.4rem', borderStyle: 'dashed', opacity: uploadingTask === t.id ? 0.6 : 1, cursor: uploadingTask === t.id ? 'not-allowed' : 'pointer' }}
-                              onClick={(e) => handleUploadClick(e, t.id)}
+                              onClick={(e) => {
+                                 e.stopPropagation();
+                                 if (uploadingTask) return;
+                                 document.getElementById(`file-${t.id}`).click();
+                              }}
                             >
                               {uploadingTask === t.id ? 'Subiendo...' : <><MdUploadFile /> Subir Arte / Mockup</>}
                             </button>
